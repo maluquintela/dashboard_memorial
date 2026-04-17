@@ -1,0 +1,53 @@
+/* Tema TecPred — após Tailwind; fallback para variáveis e classes utilitárias */
+:root {
+  --tp-header-from: #3b3faf;
+  --tp-header-to: #4c4fbf;
+  --tp-accent: #ff7a45;
+  --tp-accent-strong: #f97316;
+  --tp-page: #f5f6fa;
+  --tp-card: #ffffff;
+  --tp-text: #1f2937;
+  --tp-muted: #6b7280;
+  --tp-border: #e5e7eb;
+  --tp-primary: #4c4fbf;
+  --tp-primary-dark: #3b3faf;
+  --tp-accent-orange: #ff7a45;
+  --tp-accent-soft: #fff5f0;
+  --tp-nav-active-bg: rgba(76, 79, 191, 0.1);
+}
+
+html {
+  background-color: #f5f6fa !important;
+}
+
+.tp-btn-primary {
+  border-radius: 0.75rem;
+  background: linear-gradient(180deg, #5e61c9 0%, #4c4fbf 48%, #3b3faf 100%);
+  color: #fff !important;
+  font-weight: 600;
+  border: none;
+  box-shadow: 0 2px 8px rgba(59, 63, 175, 0.35);
+}
+
+.tp-btn-primary:hover {
+  filter: brightness(1.06);
+}
+
+.tp-input {
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  color: #1f2937;
+  border-radius: 0.5rem;
+}
+
+.tp-input:focus {
+  outline: none;
+  border-color: #4c4fbf;
+  box-shadow: 0 0 0 3px rgba(76, 79, 191, 0.2);
+}
+
+.tp-stat-strip {
+  height: 4px;
+  width: 100%;
+  background: linear-gradient(90deg, #ff7a45 0%, #f97316 100%);
+}

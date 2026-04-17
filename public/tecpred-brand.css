@@ -1,0 +1,6 @@
+/* Backup: cores fixas se o JS não rodar */
+html,
+body {
+  background-color: #f5f6fa !important;
+  color: #1f2937 !important;
+}
