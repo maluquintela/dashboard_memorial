@@ -1,10 +1,14 @@
 import axios from 'axios';
 import type {
+  ApiMemorialType,
   MemorialType,
   GenerateMemorialResponse,
   CorrectMemorialResponse,
   ListMemorialsResponse,
   Memorial,
+  GeneratedMemorialApiResponse,
+  GeneratedMemorialListApiResponse,
+  GeneratedMemorialDownloadApiResponse,
 } from '../types';
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000';
@@ -13,62 +17,76 @@ const client = axios.create({
   baseURL: BASE_URL,
 });
 
-/**
- * POST /memorial/generate
- * Sends PDFs and observations to generate a new memorial document.
- * Replace the endpoint path and field names to match your backend.
- */
+const API_TYPE_BY_UI_TYPE: Record<MemorialType, ApiMemorialType> = {
+  telecomunicacoes: 'telecom',
+  eletrico: 'eletrico',
+  gas_natural: 'gas-natural',
+  gas_glp: 'glp',
+};
+
+const UI_TYPE_BY_API_TYPE: Record<ApiMemorialType, MemorialType> = {
+  telecom: 'telecomunicacoes',
+  eletrico: 'eletrico',
+  'gas-natural': 'gas_natural',
+  glp: 'gas_glp',
+};
+
+function toMemorial(api: GeneratedMemorialApiResponse): Memorial {
+  return {
+    id: api.id,
+    type: UI_TYPE_BY_API_TYPE[api.type],
+    projectName: api.project_name,
+    createdAt: api.created_at,
+    docxUrl: api.download_url,
+    observations: api.observations ?? undefined,
+    pdfFilenames: api.pdf_filenames,
+    status: api.status,
+  };
+}
+
 export async function generateMemorial(
   type: MemorialType,
   files: File[],
   observations: string
 ): Promise<GenerateMemorialResponse> {
+  const apiType = API_TYPE_BY_UI_TYPE[type];
   const form = new FormData();
-  form.append('type', type);
-  form.append('observations', observations);
   files.forEach((file) => form.append('files', file));
+  if (observations.trim()) {
+    form.append('observations', observations.trim());
+  }
 
-  const { data } = await client.post<GenerateMemorialResponse>(
-    '/memorial/generate',
-    form,
-    { headers: { 'Content-Type': 'multipart/form-data' } }
+  const { data } = await client.post<GeneratedMemorialApiResponse>(
+    `/api/v1/memoriais/${apiType}/from-files/persist`,
+    form
   );
-  return data;
+  return { memorial: toMemorial(data) };
 }
 
-/**
- * POST /memorial/:id/correct
- * Sends correction feedback for a previously generated memorial.
- */
-export async function correctMemorial(
-  memorialId: string,
-  feedback: string
-): Promise<CorrectMemorialResponse> {
-  const { data } = await client.post<CorrectMemorialResponse>(
-    `/memorial/${memorialId}/correct`,
-    { feedback }
-  );
-  return data;
+export async function correctMemorial(): Promise<CorrectMemorialResponse> {
+  throw new Error('Correção por sessão ainda não está habilitada neste dashboard.');
 }
 
-/**
- * GET /memorial?type=<type>
- * Lists all generated memorials, optionally filtered by type.
- */
 export async function listMemorials(
   type?: MemorialType
 ): Promise<ListMemorialsResponse> {
-  const { data } = await client.get<ListMemorialsResponse>('/memorial', {
-    params: type ? { type } : undefined,
-  });
-  return data;
+  const { data } = await client.get<GeneratedMemorialListApiResponse>(
+    '/api/v1/memoriais',
+    { params: type ? { type: API_TYPE_BY_UI_TYPE[type] } : undefined }
+  );
+  return { memorials: data.memorials.map(toMemorial) };
 }
 
-/**
- * GET /memorial/:id
- * Returns details of a single memorial.
- */
 export async function getMemorial(id: string): Promise<Memorial> {
-  const { data } = await client.get<Memorial>(`/memorial/${id}`);
-  return data;
+  const { data } = await client.get<GeneratedMemorialApiResponse>(
+    `/api/v1/memoriais/${id}`
+  );
+  return toMemorial(data);
+}
+
+export async function refreshMemorialDownloadUrl(id: string): Promise<string> {
+  const { data } = await client.get<GeneratedMemorialDownloadApiResponse>(
+    `/api/v1/memoriais/${id}/download`
+  );
+  return data.download_url;
 }

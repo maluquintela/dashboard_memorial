@@ -7,7 +7,7 @@ import MemorialOutput from '../components/MemorialOutput';
 import GeneratedList from '../components/GeneratedList';
 import ProjectDetail from '../components/ProjectDetail';
 import type { Memorial, MemorialType } from '../types';
-import { generateMemorial, correctMemorial, listMemorials } from '../services/api';
+import { generateMemorial, listMemorials } from '../services/api';
 import { TrendingUp } from 'lucide-react';
 import { TP, tpCardStyle } from '../theme';
 
@@ -15,44 +15,14 @@ type SidebarView = MemorialType | 'gerados';
 
 const MEMORIAL_TYPES: MemorialType[] = ['telecomunicacoes', 'eletrico', 'gas_natural', 'gas_glp'];
 
-const DEMO_MEMORIALS: Memorial[] = [
-  {
-    id: '1',
-    type: 'telecomunicacoes',
-    projectName: 'Projeto 1 - Telecomunicações',
-    createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
-    observations: 'Infraestrutura de cabeamento estruturado para o bloco A.',
-    pdfFilenames: ['planta_pav_terreo.pdf', 'planta_pav_superior.pdf'],
-    status: 'ready',
-    docxUrl: '#',
-  },
-  {
-    id: '2',
-    type: 'telecomunicacoes',
-    projectName: 'Projeto 2 - Telecomunicações',
-    createdAt: new Date(Date.now() - 86400000).toISOString(),
-    pdfFilenames: ['planta_geral.pdf'],
-    status: 'ready',
-    docxUrl: '#',
-  },
-  {
-    id: '3',
-    type: 'eletrico',
-    projectName: 'Projeto 1 - Elétrico',
-    createdAt: new Date(Date.now() - 86400000 * 5).toISOString(),
-    observations: 'Quadro de distribuição e SPDA.',
-    pdfFilenames: ['planta_eletrica.pdf'],
-    status: 'ready',
-    docxUrl: '#',
-  },
-];
-
 export default function Dashboard() {
   const [activeView, setActiveView] = useState<SidebarView>('telecomunicacoes');
-  const [memorials, setMemorials] = useState<Memorial[]>(DEMO_MEMORIALS);
+  const [memorials, setMemorials] = useState<Memorial[]>([]);
   const [currentMemorial, setCurrentMemorial] = useState<Memorial | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [isCorrecting, setIsCorrecting] = useState(false);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [historyError, setHistoryError] = useState<string | null>(null);
+  const [generationError, setGenerationError] = useState<string | null>(null);
   const [historyCategory, setHistoryCategory] = useState<MemorialType>('telecomunicacoes');
   const [selectedMemorial, setSelectedMemorial] = useState<Memorial | null>(null);
 
@@ -61,11 +31,15 @@ export default function Dashboard() {
     : 'telecomunicacoes';
 
   const fetchMemorials = useCallback(async () => {
+    setIsLoadingHistory(true);
+    setHistoryError(null);
     try {
       const res = await listMemorials();
       setMemorials(res.memorials);
     } catch {
-      // demo
+      setHistoryError('Não foi possível carregar os memoriais gerados.');
+    } finally {
+      setIsLoadingHistory(false);
     }
   }, []);
 
@@ -76,34 +50,28 @@ export default function Dashboard() {
   const handleGenerate = async (files: File[], observations: string) => {
     setIsGenerating(true);
     setCurrentMemorial(null);
+    setGenerationError(null);
     try {
       const res = await generateMemorial(activeType, files, observations);
       setCurrentMemorial(res.memorial);
-      setMemorials((prev) => [res.memorial, ...prev]);
+      setMemorials((prev) => [
+        res.memorial,
+        ...prev.filter((m) => m.id !== res.memorial.id),
+      ]);
     } catch {
+      setGenerationError(
+        'Não foi possível gerar o memorial. Verifique a API e os arquivos enviados.'
+      );
       const errorMemorial: Memorial = {
         id: `err-${Date.now()}`,
         type: activeType,
-        projectName: `Projeto ${Date.now()}`,
+        projectName: 'Falha ao gerar memorial',
         createdAt: new Date().toISOString(),
         status: 'error',
       };
       setCurrentMemorial(errorMemorial);
     } finally {
       setIsGenerating(false);
-    }
-  };
-
-  const handleCorrect = async (memorialId: string, feedback: string) => {
-    setIsCorrecting(true);
-    try {
-      const res = await correctMemorial(memorialId, feedback);
-      setCurrentMemorial(res.memorial);
-      setMemorials((prev) =>
-        prev.map((m) => (m.id === res.memorial.id ? res.memorial : m))
-      );
-    } finally {
-      setIsCorrecting(false);
     }
   };
 
@@ -143,6 +111,19 @@ export default function Dashboard() {
               </div>
 
               <DashboardStats memorials={memorials} />
+
+              {(historyError || generationError) && (
+                <div
+                  className="rounded-lg border px-4 py-3 text-sm font-medium"
+                  style={{
+                    background: TP.accentSoft,
+                    borderColor: 'rgba(255, 122, 69, 0.35)',
+                    color: '#9a3412',
+                  }}
+                >
+                  {generationError ?? historyError}
+                </div>
+              )}
 
               <section
                 className="overflow-hidden px-4 py-4"
@@ -206,8 +187,6 @@ export default function Dashboard() {
                   <MemorialOutput
                     memorial={currentMemorial}
                     isGenerating={isGenerating}
-                    onCorrect={handleCorrect}
-                    isCorrecting={isCorrecting}
                   />
                 </div>
               </div>
@@ -233,8 +212,15 @@ export default function Dashboard() {
                   Memoriais gerados
                 </h2>
                 <p className="mt-1 text-sm" style={{ color: TP.muted }}>
-                  Filtre por categoria e abra o detalhe de cada projeto.
+                  {isLoadingHistory
+                    ? 'Carregando memoriais gerados...'
+                    : 'Filtre por categoria e abra o detalhe de cada projeto.'}
                 </p>
+                {historyError && (
+                  <p className="mt-2 text-sm font-medium" style={{ color: TP.accentStrong }}>
+                    {historyError}
+                  </p>
+                )}
               </div>
 
               <div className="flex min-h-0 flex-1 gap-4 overflow-hidden">

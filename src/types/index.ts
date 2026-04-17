@@ -1,4 +1,5 @@
 export type MemorialType = 'telecomunicacoes' | 'eletrico' | 'gas_natural' | 'gas_glp';
+export type ApiMemorialType = 'telecom' | 'eletrico' | 'gas-natural' | 'glp';
 
 export interface Memorial {
   id: string;
@@ -32,6 +33,42 @@ export interface GenerateMemorialResponse {
 
 export interface ListMemorialsResponse {
   memorials: Memorial[];
+}
+
+export interface GeneratedMemorialApiResponse {
+  id: string;
+  type: ApiMemorialType;
+  project_name: string;
+  status: Memorial['status'];
+  observations?: string | null;
+  pdf_filenames: string[];
+  created_at: string;
+  updated_at: string;
+  download_url: string;
+}
+
+export interface GeneratedMemorialListApiResponse {
+  memorials: GeneratedMemorialApiResponse[];
+}
+
+export interface GeneratedMemorialDownloadApiResponse {
+  download_url: string;
+}
+
+export interface ApiDetailError {
+  detail: string;
+}
+
+export interface ApiValidationIssue {
+  path: string;
+  message: string;
+  validator: string;
+}
+
+export interface ApiValidationError {
+  detail: string;
+  errors: ApiValidationIssue[];
+  extraction_report?: unknown;
 }
 
 export const MEMORIAL_TYPE_LABELS: Record<MemorialType, string> = {
