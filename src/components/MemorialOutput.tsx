@@ -1,6 +1,8 @@
 import { FileDown, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import type { Memorial } from '../types';
 import { TP } from '../theme';
+import DocxPreview from './DocxPreview';
+import { formatDateTime } from '../utils/date';
 
 interface MemorialOutputProps {
   memorial: Memorial | null;
@@ -94,11 +96,7 @@ export default function MemorialOutput({
                 {memorial.projectName}
               </p>
               <p className="text-xs" style={{ color: TP.muted }}>
-                {new Date(memorial.createdAt).toLocaleDateString('pt-BR', {
-                  day: '2-digit',
-                  month: 'short',
-                  year: 'numeric',
-                })}
+                {formatDateTime(memorial.createdAt)}
               </p>
             </div>
           </div>
@@ -109,13 +107,31 @@ export default function MemorialOutput({
               className="tp-btn-primary flex items-center gap-1.5 px-3 py-1.5 text-xs"
             >
               <FileDown size={13} />
-              .docx
+              Baixar
             </a>
           )}
         </div>
 
         <div className="flex-1 overflow-y-auto p-4">
-          {memorial.observations && (
+          {memorial.status === 'error' && (
+            <div
+              className="rounded-lg border p-3 text-sm"
+              style={{
+                borderColor: 'rgba(248, 113, 113, 0.45)',
+                background: '#FEF2F2',
+                color: '#991B1B',
+              }}
+            >
+              <p className="mb-1 text-xs font-semibold uppercase tracking-wide">
+                Erro na geração
+              </p>
+              <p>
+                {memorial.observations ??
+                  'Não foi possível gerar o memorial. Verifique a API e os arquivos enviados.'}
+              </p>
+            </div>
+          )}
+          {memorial.status !== 'error' && memorial.observations && (
             <div
               className="rounded-lg border p-3 text-sm"
               style={{
@@ -130,10 +146,13 @@ export default function MemorialOutput({
               <p>{memorial.observations}</p>
             </div>
           )}
-          {!memorial.observations && (
-            <p className="py-6 text-center text-sm" style={{ color: TP.muted }}>
-              Memorial gerado com sucesso. Faça o download em .docx.
-            </p>
+          {memorial.status !== 'error' && !memorial.observations && (
+            <DocxPreview memorial={memorial} />
+          )}
+          {memorial.status !== 'error' && memorial.observations && (
+            <div className="mt-4">
+              <DocxPreview memorial={memorial} />
+            </div>
           )}
         </div>
       </div>

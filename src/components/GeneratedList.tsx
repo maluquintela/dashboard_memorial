@@ -1,7 +1,8 @@
-import { Radio, Zap, Flame, Wind, ChevronRight, Clock } from 'lucide-react';
+import { Radio, Zap, Flame, Wind, ChevronRight, Clock, FileDown, Trash2 } from 'lucide-react';
 import type { Memorial, MemorialType } from '../types';
 import { MEMORIAL_TYPE_LABELS } from '../types';
 import { TP, tpCardStyle } from '../theme';
+import { formatDateTime } from '../utils/date';
 
 interface GeneratedListProps {
   memorials: Memorial[];
@@ -9,6 +10,8 @@ interface GeneratedListProps {
   onCategoryChange: (type: MemorialType) => void;
   selectedId: string | null;
   onSelect: (memorial: Memorial) => void;
+  onDownload: (memorial: Memorial) => void;
+  onDelete: (memorial: Memorial) => void;
 }
 
 const categoryIcons: Record<MemorialType, React.ReactNode> = {
@@ -26,14 +29,19 @@ export default function GeneratedList({
   onCategoryChange,
   selectedId,
   onSelect,
+  onDownload,
+  onDelete,
 }: GeneratedListProps) {
   const filtered = memorials.filter((m) => m.type === activeCategory);
 
   return (
-    <div className="flex h-full gap-4">
+    <div
+      className="flex h-full overflow-hidden"
+      style={tpCardStyle}
+    >
       <div
-        className="flex w-44 shrink-0 flex-col gap-1 p-3"
-        style={tpCardStyle}
+        className="flex w-48 shrink-0 flex-col gap-1 border-r p-3"
+        style={{ borderColor: TP.border }}
       >
         <p
           className="mb-1 px-2 text-[10px] font-semibold uppercase tracking-widest"
@@ -74,10 +82,7 @@ export default function GeneratedList({
         })}
       </div>
 
-      <div
-        className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
-        style={tpCardStyle}
-      >
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <div
           className="flex items-center justify-between border-b px-4 py-3"
           style={{ borderColor: TP.border }}
@@ -105,14 +110,17 @@ export default function GeneratedList({
           ) : (
             <ul className="divide-y divide-[#E5E7EB]">
               {filtered.map((memorial) => (
-                <li key={memorial.id}>
+                <li
+                  key={memorial.id}
+                  className="group flex items-center gap-2 px-4 py-3 transition-colors"
+                  style={{
+                    background: selectedId === memorial.id ? TP.navActiveBg : undefined,
+                  }}
+                >
                   <button
                     type="button"
                     onClick={() => onSelect(memorial)}
-                    className="group flex w-full items-center gap-3 px-4 py-3 text-left transition-colors"
-                    style={{
-                      background: selectedId === memorial.id ? TP.navActiveBg : undefined,
-                    }}
+                    className="flex min-w-0 flex-1 items-center gap-3 text-left"
                   >
                     <div className="min-w-0 flex-1">
                       <p
@@ -124,7 +132,7 @@ export default function GeneratedList({
                         {memorial.projectName}
                       </p>
                       <p className="mt-0.5 text-xs" style={{ color: TP.muted }}>
-                        {new Date(memorial.createdAt).toLocaleDateString('pt-BR')}
+                        {formatDateTime(memorial.createdAt)}
                       </p>
                     </div>
                     <div className="flex shrink-0 items-center gap-2">
@@ -144,6 +152,26 @@ export default function GeneratedList({
                         }}
                       />
                     </div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onDownload(memorial)}
+                    disabled={memorial.status !== 'ready'}
+                    aria-label={`Baixar ${memorial.projectName}`}
+                    className="tp-btn-primary flex shrink-0 items-center gap-1 px-2.5 py-1.5 text-xs disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <FileDown size={12} />
+                    Baixar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onDelete(memorial)}
+                    aria-label={`Excluir ${memorial.projectName}`}
+                    className="flex shrink-0 items-center gap-1 rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition-colors hover:bg-red-50"
+                    style={{ borderColor: 'rgba(248, 113, 113, 0.45)', color: '#dc2626' }}
+                  >
+                    <Trash2 size={12} />
+                    Excluir
                   </button>
                 </li>
               ))}

@@ -1,41 +1,31 @@
-import { Briefcase, CheckCircle2, FileStack, Layers } from 'lucide-react';
-import type { Memorial } from '../types';
+import { Briefcase, CheckCircle2 } from 'lucide-react';
+import type { Memorial, MemorialType } from '../types';
+import { MEMORIAL_TYPE_LABELS } from '../types';
 import { TP } from '../theme';
 
 interface DashboardStatsProps {
   memorials: Memorial[];
+  activeType: MemorialType;
 }
 
-export default function DashboardStats({ memorials }: DashboardStatsProps) {
-  const total = memorials.length;
-  const ready = memorials.filter((m) => m.status === 'ready').length;
-  const withPdf = memorials.filter((m) => m.pdfFilenames && m.pdfFilenames.length > 0).length;
-  const typesUsed = new Set(memorials.map((m) => m.type)).size;
+export default function DashboardStats({ memorials, activeType }: DashboardStatsProps) {
+  const categoryMemorials = memorials.filter((m) => m.type === activeType);
+  const total = categoryMemorials.length;
+  const totalGenerated = memorials.length;
+  const categoryLabel = MEMORIAL_TYPE_LABELS[activeType];
 
   const cards = [
     {
-      label: 'Total de memoriais',
+      label: `Memoriais de ${categoryLabel}`,
       value: total,
-      sub: `${typesUsed} categorias ativas`,
+      sub: 'Gerados nesta categoria',
       icon: Briefcase,
     },
     {
-      label: 'Memoriais prontos',
-      value: ready,
-      sub: 'Documentos disponíveis',
+      label: 'Total geral de memoriais',
+      value: totalGenerated,
+      sub: 'Gerados em todas as categorias',
       icon: CheckCircle2,
-    },
-    {
-      label: 'Com plantas PDF',
-      value: withPdf,
-      sub: 'Anexos registrados',
-      icon: FileStack,
-    },
-    {
-      label: 'Tipos de projeto',
-      value: 4,
-      sub: 'Telecom · Elétrico · Gás',
-      icon: Layers,
     },
   ];
 
@@ -44,7 +34,7 @@ export default function DashboardStats({ memorials }: DashboardStatsProps) {
       <h2 className="mb-3 text-sm font-semibold" style={{ color: TP.muted }}>
         Visão geral
       </h2>
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {cards.map((c) => (
           <article
             key={c.label}

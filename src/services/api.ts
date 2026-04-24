@@ -15,7 +15,7 @@ const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000';
 
 const client = axios.create({
   baseURL: BASE_URL,
-  timeout: 120_000,
+  timeout: 600_000,
 });
 
 client.interceptors.response.use(
@@ -107,4 +107,20 @@ export async function refreshMemorialDownloadUrl(id: string): Promise<string> {
     `/api/v1/memoriais/${id}/download`
   );
   return data.download_url;
+}
+
+export async function deleteMemorial(id: string): Promise<void> {
+  await client.delete(`/api/v1/memoriais/${id}`);
+}
+
+export async function fetchMemorialDocxBlob(
+  id: string,
+  existingUrl?: string
+): Promise<Blob> {
+  const downloadUrl = existingUrl || await refreshMemorialDownloadUrl(id);
+  const response = await fetch(downloadUrl);
+  if (!response.ok) {
+    throw new Error('Não foi possível carregar o preview do memorial.');
+  }
+  return response.blob();
 }

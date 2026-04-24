@@ -27,10 +27,31 @@ html {
   font-weight: 600;
   border: none;
   box-shadow: 0 2px 8px rgba(59, 63, 175, 0.35);
+  cursor: pointer;
 }
 
 .tp-btn-primary:hover {
   filter: brightness(1.06);
+}
+
+button:not(:disabled),
+a[href],
+[role='button'] {
+  cursor: pointer;
+}
+
+.tp-docx-preview {
+  background: #f8fafc;
+}
+
+.tp-docx-preview .tp-docx-wrapper {
+  background: transparent !important;
+  padding: 1rem 0 !important;
+}
+
+.tp-docx-preview .tp-docx {
+  margin: 0 auto 1rem !important;
+  box-shadow: 0 12px 28px rgba(31, 41, 55, 0.16) !important;
 }
 
 .tp-input {

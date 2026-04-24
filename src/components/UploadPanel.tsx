@@ -6,7 +6,7 @@ import { TP } from '../theme';
 
 interface UploadPanelProps {
   type: MemorialType;
-  onGenerate: (files: File[], observations: string) => Promise<void>;
+  onGenerate: (type: MemorialType, files: File[], observations: string) => Promise<void>;
   isGenerating: boolean;
 }
 
@@ -31,18 +31,18 @@ export default function UploadPanel({ type, onGenerate, isGenerating }: UploadPa
 
   const handleGenerate = async () => {
     if (files.length === 0) return;
-    await onGenerate(files, observations);
+    await onGenerate(type, files, observations);
     setFiles([]);
     setObservations('');
   };
 
   return (
-    <div className="flex h-full flex-col gap-4">
-      <div>
-        <h2 className="text-lg font-semibold" style={{ color: TP.text }}>
+    <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-4">
+      <div className="text-center">
+        <h2 className="text-xl font-semibold" style={{ color: TP.text }}>
           Gerar Memorial
         </h2>
-        <p className="mt-0.5 text-sm" style={{ color: TP.muted }}>
+        <p className="mt-1 text-sm" style={{ color: TP.muted }}>
           {MEMORIAL_TYPE_LABELS[type]} — Anexe as plantas em PDF
         </p>
       </div>
@@ -56,7 +56,7 @@ export default function UploadPanel({ type, onGenerate, isGenerating }: UploadPa
           setIsDragActive(false);
           addFiles(Array.from(e.dataTransfer.files));
         }}
-        className="flex min-h-[120px] shrink cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed px-4 py-4 transition-all"
+        className="flex min-h-[132px] w-full cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed px-6 py-5 text-center transition-all"
         style={
           isDragActive
             ? { borderColor: TP.primary, background: TP.accentSoft }
@@ -99,7 +99,7 @@ export default function UploadPanel({ type, onGenerate, isGenerating }: UploadPa
       </div>
 
       {files.length > 0 && (
-        <ul className="max-h-36 space-y-1.5 overflow-y-auto">
+        <ul className="max-h-36 w-full space-y-1.5 overflow-y-auto">
           {files.map((file) => (
             <li
               key={file.name}
@@ -119,7 +119,7 @@ export default function UploadPanel({ type, onGenerate, isGenerating }: UploadPa
                 type="button"
                 onClick={(e) => { e.stopPropagation(); removeFile(file.name); }}
                 style={{ color: TP.border }}
-                className="transition-colors hover:text-red-500"
+                className="cursor-pointer transition-colors hover:text-red-500"
                 title="Remover"
               >
                 <X size={14} />
@@ -129,7 +129,7 @@ export default function UploadPanel({ type, onGenerate, isGenerating }: UploadPa
         </ul>
       )}
 
-      <div>
+      <div className="w-full">
         <label
           className="mb-1.5 block text-xs font-semibold uppercase tracking-wide"
           style={{ color: TP.muted }}
@@ -140,8 +140,8 @@ export default function UploadPanel({ type, onGenerate, isGenerating }: UploadPa
           value={observations}
           onChange={(e) => setObservations(e.target.value)}
           placeholder="Informações adicionais para o memorial…"
-          rows={3}
-          className="tp-input w-full resize-none px-3 py-2.5 text-sm transition"
+          rows={4}
+          className="tp-input min-h-[104px] w-full resize-none px-3 py-2.5 text-sm transition"
         />
       </div>
 
@@ -149,7 +149,7 @@ export default function UploadPanel({ type, onGenerate, isGenerating }: UploadPa
         type="button"
         onClick={handleGenerate}
         disabled={files.length === 0 || isGenerating}
-        className="tp-btn-primary flex w-full items-center justify-center gap-2 py-3 text-sm disabled:cursor-not-allowed disabled:opacity-40"
+        className="tp-btn-primary flex w-full max-w-xs items-center justify-center gap-2 px-5 py-3 text-sm disabled:cursor-not-allowed disabled:opacity-40"
       >
         {isGenerating ? (
           <>
