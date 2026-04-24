@@ -15,7 +15,25 @@ const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000';
 
 const client = axios.create({
   baseURL: BASE_URL,
+  timeout: 120_000,
 });
+
+client.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.code === 'ECONNABORTED') {
+      throw new Error('A requisição excedeu o tempo limite. Tente novamente.');
+    }
+    if (!error.response) {
+      throw new Error('Não foi possível conectar ao servidor. Verifique se a API está ativa.');
+    }
+    const data = error.response.data;
+    if (data?.detail) {
+      throw new Error(typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail));
+    }
+    throw error;
+  }
+);
 
 const API_TYPE_BY_UI_TYPE: Record<MemorialType, ApiMemorialType> = {
   telecomunicacoes: 'telecom',

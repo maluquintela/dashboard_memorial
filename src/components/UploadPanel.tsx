@@ -1,5 +1,4 @@
-import { useCallback, useState } from 'react';
-import { useDropzone } from 'react-dropzone';
+import { useRef, useState } from 'react';
 import { UploadCloud, FileText, X, Loader2 } from 'lucide-react';
 import type { MemorialType } from '../types';
 import { MEMORIAL_TYPE_LABELS } from '../types';
@@ -14,26 +13,24 @@ interface UploadPanelProps {
 export default function UploadPanel({ type, onGenerate, isGenerating }: UploadPanelProps) {
   const [files, setFiles] = useState<File[]>([]);
   const [observations, setObservations] = useState('');
+  const [isDragActive, setIsDragActive] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const onDrop = useCallback((accepted: File[]) => {
+  const addFiles = (incoming: File[]) => {
+    const pdfs = incoming.filter((f) => f.name.toLowerCase().endsWith('.pdf'));
+    if (pdfs.length === 0) return;
     setFiles((prev) => {
       const existing = new Set(prev.map((f) => f.name));
-      const newFiles = accepted.filter((f) => !existing.has(f.name));
-      return [...prev, ...newFiles];
+      return [...prev, ...pdfs.filter((f) => !existing.has(f.name))];
     });
-  }, []);
-
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    accept: { 'application/pdf': ['.pdf'] },
-    multiple: true,
-  });
+  };
 
   const removeFile = (name: string) => {
     setFiles((prev) => prev.filter((f) => f.name !== name));
   };
 
   const handleGenerate = async () => {
+    if (files.length === 0) return;
     await onGenerate(files, observations);
     setFiles([]);
     setObservations('');
@@ -51,23 +48,32 @@ export default function UploadPanel({ type, onGenerate, isGenerating }: UploadPa
       </div>
 
       <div
-        {...getRootProps()}
-        className={`flex min-h-[180px] flex-1 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed px-4 py-6 transition-all ${
-          isDragActive ? '' : ''
-        }`}
+        onClick={() => inputRef.current?.click()}
+        onDragOver={(e) => { e.preventDefault(); setIsDragActive(true); }}
+        onDragLeave={() => setIsDragActive(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setIsDragActive(false);
+          addFiles(Array.from(e.dataTransfer.files));
+        }}
+        className="flex min-h-[120px] shrink cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed px-4 py-4 transition-all"
         style={
           isDragActive
-            ? {
-                borderColor: TP.primary,
-                background: TP.accentSoft,
-              }
-            : {
-                borderColor: TP.border,
-                background: TP.page,
-              }
+            ? { borderColor: TP.primary, background: TP.accentSoft }
+            : { borderColor: TP.border, background: TP.page }
         }
       >
-        <input {...getInputProps()} />
+        <input
+          ref={inputRef}
+          type="file"
+          accept=".pdf"
+          multiple
+          className="hidden"
+          onChange={(e) => {
+            if (e.target.files) addFiles(Array.from(e.target.files));
+            e.target.value = '';
+          }}
+        />
         <UploadCloud
           size={36}
           className="mb-3"
@@ -111,7 +117,7 @@ export default function UploadPanel({ type, onGenerate, isGenerating }: UploadPa
               </span>
               <button
                 type="button"
-                onClick={() => removeFile(file.name)}
+                onClick={(e) => { e.stopPropagation(); removeFile(file.name); }}
                 style={{ color: TP.border }}
                 className="transition-colors hover:text-red-500"
                 title="Remover"
