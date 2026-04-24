@@ -5,4 +5,4 @@ buildCommand = "npm run build"
 startCommand = "node server.mjs"
 
 [variables]
-RAILPACK_NO_SPA = "1"
+NIXPACKS_NO_SPA = "1"
