@@ -1,13 +1,17 @@
-import { FileDown, FileText, MessageSquare, CalendarDays, Tag } from 'lucide-react';
+import { FileDown, FileText, MessageSquare, CalendarDays, Tag, Trash2 } from 'lucide-react';
 import type { Memorial } from '../types';
 import { MEMORIAL_TYPE_LABELS } from '../types';
 import { TP, tpCardStyle } from '../theme';
+import DocxPreview from './DocxPreview';
+import { formatDateTime, formatLongDateTime } from '../utils/date';
 
 interface ProjectDetailProps {
   memorial: Memorial | null;
+  onDownload: (memorial: Memorial) => void;
+  onDelete: (memorial: Memorial) => void;
 }
 
-export default function ProjectDetail({ memorial }: ProjectDetailProps) {
+export default function ProjectDetail({ memorial, onDownload, onDelete }: ProjectDetailProps) {
   if (!memorial) {
     return (
       <div
@@ -37,73 +41,123 @@ export default function ProjectDetail({ memorial }: ProjectDetailProps) {
               </span>
               <span className="flex items-center gap-1 text-xs" style={{ color: TP.muted }}>
                 <CalendarDays size={11} />
-                {new Date(memorial.createdAt).toLocaleDateString('pt-BR', {
-                  day: '2-digit',
-                  month: 'long',
-                  year: 'numeric',
-                })}
+                {formatLongDateTime(memorial.createdAt)}
               </span>
             </div>
           </div>
-          <span
-            className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${
-              memorial.status === 'ready'
-                ? 'bg-emerald-50 text-emerald-600'
+          <div className="flex shrink-0 items-center gap-2">
+            <span
+              className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                memorial.status === 'ready'
+                  ? 'bg-emerald-50 text-emerald-600'
+                  : memorial.status === 'error'
+                    ? 'bg-red-50 text-red-600'
+                    : 'bg-amber-50 text-amber-600'
+              }`}
+            >
+              {memorial.status === 'ready'
+                ? 'Pronto'
                 : memorial.status === 'error'
-                  ? 'bg-red-50 text-red-600'
-                  : 'bg-amber-50 text-amber-600'
-            }`}
-          >
-            {memorial.status === 'ready'
-              ? 'Pronto'
-              : memorial.status === 'error'
-                ? 'Erro'
-                : 'Gerando'}
-          </span>
+                  ? 'Erro'
+                  : 'Gerando'}
+            </span>
+            <button
+              type="button"
+              onClick={() => onDelete(memorial)}
+              className="flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition-colors hover:bg-red-50"
+              style={{ borderColor: 'rgba(248, 113, 113, 0.45)', color: '#dc2626' }}
+            >
+              <Trash2 size={12} />
+              Excluir
+            </button>
+          </div>
         </div>
       </div>
 
       <div className="flex-1 space-y-5 p-5">
         <section>
           <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest" style={{ color: TP.muted }}>
-            Memorial
+            Preview da geração
           </p>
           <div
-            className="flex items-center gap-3 rounded-xl border p-3"
+            className="rounded-xl border p-3"
             style={{
               borderColor: TP.border,
               background: TP.page,
             }}
           >
-            <div
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
-              style={{ background: 'rgba(76, 79, 191, 0.12)' }}
-            >
-              <FileDown size={18} style={{ color: TP.primary }} />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold" style={{ color: TP.text }}>
-                Memorial {MEMORIAL_TYPE_LABELS[memorial.type]}
-              </p>
-              <p className="text-xs" style={{ color: TP.muted }}>
-                Documento .docx
-              </p>
-            </div>
-            {memorial.docxUrl ? (
-              <a
-                href={memorial.docxUrl}
-                download
-                className="tp-btn-primary flex shrink-0 items-center gap-1 px-3 py-1.5 text-xs"
+            <div className="flex items-center gap-3">
+              <div
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
+                style={{ background: 'rgba(76, 79, 191, 0.12)' }}
+              >
+                <FileDown size={18} style={{ color: TP.primary }} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold" style={{ color: TP.text }}>
+                  Memorial {MEMORIAL_TYPE_LABELS[memorial.type]}
+                </p>
+                <p className="text-xs" style={{ color: TP.muted }}>
+                  Documento .docx gerado para revisão e download
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => onDownload(memorial)}
+                disabled={memorial.status !== 'ready'}
+                className="tp-btn-primary flex shrink-0 items-center gap-1 px-3 py-1.5 text-xs disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <FileDown size={12} />
                 Baixar
-              </a>
-            ) : (
-              <span className="text-xs italic" style={{ color: TP.muted }}>
-                Indisponível
-              </span>
-            )}
+              </button>
+            </div>
+
+            <div className="mt-4 grid gap-2 text-sm sm:grid-cols-2">
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: TP.muted }}>
+                  Projeto
+                </p>
+                <p className="truncate font-medium" style={{ color: TP.text }}>
+                  {memorial.projectName}
+                </p>
+              </div>
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: TP.muted }}>
+                  Tipo
+                </p>
+                <p className="font-medium" style={{ color: TP.text }}>
+                  {MEMORIAL_TYPE_LABELS[memorial.type]}
+                </p>
+              </div>
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: TP.muted }}>
+                  Gerado em
+                </p>
+                <p className="font-medium" style={{ color: TP.text }}>
+                  {formatDateTime(memorial.createdAt)}
+                </p>
+              </div>
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: TP.muted }}>
+                  Status
+                </p>
+                <p className="font-medium" style={{ color: TP.text }}>
+                  {memorial.status === 'ready'
+                    ? 'Pronto para download'
+                    : memorial.status === 'error'
+                      ? 'Erro na geração'
+                      : 'Em geração'}
+                </p>
+              </div>
+            </div>
           </div>
+        </section>
+
+        <section>
+          <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest" style={{ color: TP.muted }}>
+            Documento
+          </p>
+          <DocxPreview memorial={memorial} />
         </section>
 
         {memorial.pdfFilenames && memorial.pdfFilenames.length > 0 && (
