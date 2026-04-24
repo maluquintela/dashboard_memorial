@@ -8,4 +8,4 @@ cmds = ["npm ci --no-cache"]
 cmds = ["npm run build"]
 
 [start]
-cmd = "npx serve dist -s -l ${PORT:-3000}"
+cmd = "npx serve dist -s -l ${PORT:-8080}"
