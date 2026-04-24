@@ -1,8 +1,11 @@
-[phases.build]
-cmds = ["npm ci", "npm run build"]
-
 [phases.setup]
 nixPkgs = ["nodejs_22"]
+
+[phases.install]
+cmds = ["npm ci --no-cache"]
+
+[phases.build]
+cmds = ["npm run build"]
 
 [start]
 cmd = "npx serve dist -s -l ${PORT:-3000}"
