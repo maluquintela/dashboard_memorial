@@ -1,8 +1,0 @@
-[build]
-buildCommand = "npm run build"
-
-[deploy]
-startCommand = "node server.mjs"
-
-[variables]
-NIXPACKS_NO_SPA = "1"
