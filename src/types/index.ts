@@ -1,5 +1,6 @@
 export type MemorialType = 'telecomunicacoes' | 'eletrico' | 'gas_natural' | 'gas_glp';
 export type ApiMemorialType = 'telecom' | 'eletrico' | 'gas-natural' | 'glp';
+export type ApiMemorialStatus = 'processing' | 'pending' | 'ready' | 'succeeded' | 'failed' | string;
 
 export interface Memorial {
   id: string;
@@ -39,7 +40,7 @@ export interface GeneratedMemorialApiResponse {
   id: string;
   type: ApiMemorialType;
   project_name: string;
-  status: Memorial['status'];
+  status: ApiMemorialStatus;
   observations?: string | null;
   pdf_filenames: string[];
   created_at: string;

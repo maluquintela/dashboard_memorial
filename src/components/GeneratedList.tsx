@@ -1,4 +1,4 @@
-import { Radio, Zap, Flame, Wind, ChevronRight, Clock, FileDown, Trash2 } from 'lucide-react';
+import { Radio, Zap, Flame, Wind, ChevronRight, Clock, FileDown, Trash2, AlertTriangle, RefreshCw } from 'lucide-react';
 import type { Memorial, MemorialType } from '../types';
 import { MEMORIAL_TYPE_LABELS } from '../types';
 import { TP, tpCardStyle } from '../theme';
@@ -12,6 +12,9 @@ interface GeneratedListProps {
   onSelect: (memorial: Memorial) => void;
   onDownload: (memorial: Memorial) => void;
   onDelete: (memorial: Memorial) => void;
+  isLoading?: boolean;
+  error?: string | null;
+  onRetry?: () => void;
 }
 
 const categoryIcons: Record<MemorialType, React.ReactNode> = {
@@ -23,6 +26,18 @@ const categoryIcons: Record<MemorialType, React.ReactNode> = {
 
 const categories: MemorialType[] = ['telecomunicacoes', 'eletrico', 'gas_natural', 'gas_glp'];
 
+const statusLabel: Record<Memorial['status'], string> = {
+  generating: 'Gerando',
+  ready: 'Pronto',
+  error: 'Erro',
+};
+
+const statusClass: Record<Memorial['status'], string> = {
+  ready: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200',
+  error: 'bg-red-50 text-red-700 ring-1 ring-red-200',
+  generating: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200',
+};
+
 export default function GeneratedList({
   memorials,
   activeCategory,
@@ -31,20 +46,23 @@ export default function GeneratedList({
   onSelect,
   onDownload,
   onDelete,
+  isLoading = false,
+  error = null,
+  onRetry,
 }: GeneratedListProps) {
   const filtered = memorials.filter((m) => m.type === activeCategory);
 
   return (
     <div
-      className="flex h-full overflow-hidden"
+      className="flex h-full w-full flex-col overflow-hidden sm:flex-row"
       style={tpCardStyle}
     >
       <div
-        className="flex w-48 shrink-0 flex-col gap-1 border-r p-3"
+        className="flex shrink-0 gap-1 overflow-x-auto border-b p-3 sm:w-48 sm:flex-col sm:overflow-x-visible sm:border-b-0 sm:border-r"
         style={{ borderColor: TP.border }}
       >
         <p
-          className="mb-1 px-2 text-[10px] font-semibold uppercase tracking-widest"
+          className="hidden px-2 text-[10px] font-semibold uppercase tracking-widest sm:mb-1 sm:block"
           style={{ color: TP.muted }}
         >
           Categorias
@@ -57,7 +75,7 @@ export default function GeneratedList({
               key={cat}
               type="button"
               onClick={() => onCategoryChange(cat)}
-              className="flex w-full items-center gap-2 rounded-lg border-l-4 px-2.5 py-2 text-left text-sm font-medium transition-all"
+              className="flex min-w-max items-center gap-2 rounded-lg border-l-4 px-2.5 py-2 text-left text-sm font-medium transition-all sm:w-full sm:min-w-0"
               style={{
                 borderLeftColor: active ? TP.accent : 'transparent',
                 background: active ? TP.navActiveBg : 'transparent',
@@ -99,28 +117,72 @@ export default function GeneratedList({
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto">
-          {filtered.length === 0 ? (
+          {isLoading ? (
+            <div className="flex h-full flex-col justify-center gap-3 p-4">
+              {[0, 1, 2].map((item) => (
+                <div
+                  key={item}
+                  className="rounded-xl border p-3"
+                  style={{ borderColor: TP.border, background: TP.page }}
+                >
+                  <div className="h-4 w-2/3 animate-pulse rounded bg-slate-200" />
+                  <div className="mt-2 h-3 w-1/2 animate-pulse rounded bg-slate-100" />
+                  <div className="mt-3 h-7 w-24 animate-pulse rounded-lg bg-slate-200" />
+                </div>
+              ))}
+            </div>
+          ) : error ? (
+            <div className="flex h-full flex-col items-center justify-center gap-3 px-5 py-10 text-center">
+              <AlertTriangle size={30} style={{ color: TP.accentStrong }} />
+              <div>
+                <p className="text-sm font-semibold" style={{ color: TP.text }}>
+                  Não foi possível carregar o histórico
+                </p>
+                <p className="mt-1 text-xs" style={{ color: TP.muted }}>
+                  Verifique a conexão com a API e tente novamente.
+                </p>
+              </div>
+              {onRetry && (
+                <button
+                  type="button"
+                  onClick={onRetry}
+                  className="tp-btn-primary flex items-center gap-1.5 px-3 py-2 text-xs"
+                >
+                  <RefreshCw size={13} />
+                  Tentar de novo
+                </button>
+              )}
+            </div>
+          ) : filtered.length === 0 ? (
             <div
-              className="flex h-full flex-col items-center justify-center gap-2 py-10"
+              className="flex h-full flex-col items-center justify-center gap-2 px-5 py-10 text-center"
               style={{ color: TP.muted }}
             >
               <Clock size={28} style={{ color: TP.border }} />
-              <p className="text-sm">Nenhum memorial gerado nesta categoria</p>
+              <p className="text-sm font-semibold" style={{ color: TP.text }}>
+                Nenhum memorial nesta categoria
+              </p>
+              <p className="max-w-xs text-xs">
+                Gere um memorial de {MEMORIAL_TYPE_LABELS[activeCategory]} para acompanhar status,
+                download e detalhes por aqui.
+              </p>
             </div>
           ) : (
             <ul className="divide-y divide-[#E5E7EB]">
               {filtered.map((memorial) => (
                 <li
                   key={memorial.id}
-                  className="group flex items-center gap-2 px-4 py-3 transition-colors"
+                  className="group flex flex-col gap-3 px-4 py-3 transition-colors hover:bg-slate-50 sm:flex-row sm:items-center sm:gap-3"
                   style={{
                     background: selectedId === memorial.id ? TP.navActiveBg : undefined,
                   }}
                 >
                   <button
                     type="button"
+                    aria-label={`Selecionar ${memorial.projectName}`}
+                    aria-current={selectedId === memorial.id ? 'true' : undefined}
                     onClick={() => onSelect(memorial)}
-                    className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                    className="flex min-h-14 w-full min-w-0 flex-1 cursor-pointer items-start gap-3 rounded-lg px-1 py-1 text-left focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#4c4fbf] sm:basis-0 sm:items-center"
                   >
                     <div className="min-w-0 flex-1">
                       <p
@@ -137,14 +199,10 @@ export default function GeneratedList({
                     </div>
                     <div className="flex shrink-0 items-center gap-2">
                       <span
-                        className={`h-1.5 w-1.5 rounded-full ${
-                          memorial.status === 'ready'
-                            ? 'bg-emerald-400'
-                            : memorial.status === 'error'
-                              ? 'bg-red-400'
-                              : 'bg-amber-400'
-                        }`}
-                      />
+                        className={`rounded-full px-2 py-1 text-[11px] font-semibold ${statusClass[memorial.status]}`}
+                      >
+                        {statusLabel[memorial.status]}
+                      </span>
                       <ChevronRight
                         size={14}
                         style={{
@@ -153,26 +211,28 @@ export default function GeneratedList({
                       />
                     </div>
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => onDownload(memorial)}
-                    disabled={memorial.status !== 'ready'}
-                    aria-label={`Baixar ${memorial.projectName}`}
-                    className="tp-btn-primary flex shrink-0 items-center gap-1 px-2.5 py-1.5 text-xs disabled:cursor-not-allowed disabled:opacity-40"
-                  >
-                    <FileDown size={12} />
-                    Baixar
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onDelete(memorial)}
-                    aria-label={`Excluir ${memorial.projectName}`}
-                    className="flex shrink-0 items-center gap-1 rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition-colors hover:bg-red-50"
-                    style={{ borderColor: 'rgba(248, 113, 113, 0.45)', color: '#dc2626' }}
-                  >
-                    <Trash2 size={12} />
-                    Excluir
-                  </button>
+                  <div className="flex shrink-0 items-center gap-2 pl-0 sm:pl-2">
+                    <button
+                      type="button"
+                      onClick={() => onDownload(memorial)}
+                      disabled={memorial.status !== 'ready'}
+                      aria-label={`Baixar ${memorial.projectName}`}
+                      className="tp-btn-primary flex flex-1 items-center justify-center gap-1 px-2.5 py-1.5 text-xs disabled:cursor-not-allowed disabled:opacity-40 sm:flex-none"
+                    >
+                      <FileDown size={12} />
+                      Baixar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onDelete(memorial)}
+                      aria-label={`Excluir ${memorial.projectName}`}
+                      className="flex flex-1 items-center justify-center gap-1 rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition-colors hover:bg-red-50 sm:flex-none"
+                      style={{ borderColor: 'rgba(248, 113, 113, 0.45)', color: '#dc2626' }}
+                    >
+                      <Trash2 size={12} />
+                      Excluir
+                    </button>
+                  </div>
                 </li>
               ))}
             </ul>

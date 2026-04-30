@@ -25,18 +25,19 @@ const items: NavItem[] = [
 
 export default function Sidebar({ active, onChange }: SidebarProps) {
   const linkBase =
-    'w-full flex items-center gap-3 px-3 py-2.5 rounded-r-lg text-sm font-medium transition-all border-l-4';
+    'flex w-full min-w-0 items-center gap-2 rounded-r-lg border-l-4 px-3 py-2.5 text-left text-sm font-medium transition-all md:gap-3';
 
   return (
     <aside
-      className="flex h-full w-56 shrink-0 flex-col"
+      className="flex w-full shrink-0 flex-col md:h-full md:w-56"
       style={{
         backgroundColor: TP.card,
         borderRight: `1px solid ${TP.border}`,
+        borderBottom: `1px solid ${TP.border}`,
         boxShadow: '2px 0 16px rgba(31, 41, 55, 0.06)',
       }}
     >
-      <div className="px-4 py-4" style={{ borderBottom: `1px solid ${TP.border}` }}>
+      <div className="hidden px-4 py-4 md:block" style={{ borderBottom: `1px solid ${TP.border}` }}>
         <TecPredLogo variant="dark" size="compact" />
         <p
           className="mt-2 text-[11px] font-medium uppercase tracking-wider"
@@ -46,9 +47,9 @@ export default function Sidebar({ active, onChange }: SidebarProps) {
         </p>
       </div>
 
-      <nav className="flex-1 space-y-1 overflow-y-auto p-3">
+      <nav className="grid grid-cols-2 gap-2 p-3 sm:grid-cols-3 md:flex md:flex-1 md:flex-col md:gap-0 md:space-y-1 md:overflow-y-auto">
         <p
-          className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-widest"
+          className="hidden px-2 text-[10px] font-semibold uppercase tracking-widest md:mb-2 md:block"
           style={{ color: TP.muted }}
         >
           Novo memorial
@@ -67,15 +68,15 @@ export default function Sidebar({ active, onChange }: SidebarProps) {
                 color: isOn ? TP.primary : TP.text,
               }}
             >
-              <span style={{ color: isOn ? TP.accent : TP.muted }}>{item.icon}</span>
-              {item.label}
+              <span className="shrink-0" style={{ color: isOn ? TP.accent : TP.muted }}>{item.icon}</span>
+              <span className="truncate">{item.label}</span>
             </button>
           );
         })}
 
-        <div className="pt-4">
+        <div className="col-span-2 sm:col-span-1 md:pt-4">
           <p
-            className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-widest"
+            className="hidden px-2 text-[10px] font-semibold uppercase tracking-widest md:mb-2 md:block"
             style={{ color: TP.muted }}
           >
             Histórico
@@ -90,15 +91,15 @@ export default function Sidebar({ active, onChange }: SidebarProps) {
               color: active === 'gerados' ? TP.primary : TP.text,
             }}
           >
-            <span style={{ color: active === 'gerados' ? TP.accent : TP.muted }}>
+            <span className="shrink-0" style={{ color: active === 'gerados' ? TP.accent : TP.muted }}>
               <FolderOpen size={18} />
             </span>
-            Memoriais gerados
+            <span className="truncate">Memoriais gerados</span>
           </button>
         </div>
       </nav>
 
-      <div className="border-t p-4" style={{ borderColor: TP.border }}>
+      <div className="hidden border-t p-4 md:block" style={{ borderColor: TP.border }}>
         <p className="text-center text-[11px]" style={{ color: TP.muted }}>
           v1.0.0 · TecPred
         </p>

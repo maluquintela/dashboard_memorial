@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { UploadCloud, FileText, X, Loader2 } from 'lucide-react';
 import type { MemorialType } from '../types';
 import { MEMORIAL_TYPE_LABELS } from '../types';
@@ -6,7 +6,7 @@ import { TP } from '../theme';
 
 interface UploadPanelProps {
   type: MemorialType;
-  onGenerate: (type: MemorialType, files: File[], observations: string) => Promise<void>;
+  onGenerate: (type: MemorialType, files: File[], observations: string) => Promise<boolean>;
   isGenerating: boolean;
 }
 
@@ -14,10 +14,15 @@ export default function UploadPanel({ type, onGenerate, isGenerating }: UploadPa
   const [files, setFiles] = useState<File[]>([]);
   const [observations, setObservations] = useState('');
   const [isDragActive, setIsDragActive] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [localError, setLocalError] = useState<string | null>(null);
 
   const addFiles = (incoming: File[]) => {
     const pdfs = incoming.filter((f) => f.name.toLowerCase().endsWith('.pdf'));
+    if (pdfs.length !== incoming.length) {
+      setLocalError('Envie apenas arquivos PDF aceitos pelo memorial.');
+    } else {
+      setLocalError(null);
+    }
     if (pdfs.length === 0) return;
     setFiles((prev) => {
       const existing = new Set(prev.map((f) => f.name));
@@ -31,9 +36,16 @@ export default function UploadPanel({ type, onGenerate, isGenerating }: UploadPa
 
   const handleGenerate = async () => {
     if (files.length === 0) return;
-    await onGenerate(type, files, observations);
-    setFiles([]);
-    setObservations('');
+    if (files.some((file) => file.size === 0)) {
+      setLocalError('Um dos arquivos está vazio. Remova esse arquivo e tente novamente.');
+      return;
+    }
+    setLocalError(null);
+    const generated = await onGenerate(type, files, observations);
+    if (generated) {
+      setFiles([]);
+      setObservations('');
+    }
   };
 
   return (
@@ -47,8 +59,8 @@ export default function UploadPanel({ type, onGenerate, isGenerating }: UploadPa
         </p>
       </div>
 
-      <div
-        onClick={() => inputRef.current?.click()}
+      <label
+        htmlFor={`memorial-files-${type}`}
         onDragOver={(e) => { e.preventDefault(); setIsDragActive(true); }}
         onDragLeave={() => setIsDragActive(false)}
         onDrop={(e) => {
@@ -56,7 +68,7 @@ export default function UploadPanel({ type, onGenerate, isGenerating }: UploadPa
           setIsDragActive(false);
           addFiles(Array.from(e.dataTransfer.files));
         }}
-        className="flex min-h-[132px] w-full cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed px-6 py-5 text-center transition-all"
+        className="flex min-h-[132px] w-full cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed px-6 py-5 text-center transition-all focus-within:ring-2 focus-within:ring-[#4c4fbf] focus-within:ring-offset-2"
         style={
           isDragActive
             ? { borderColor: TP.primary, background: TP.accentSoft }
@@ -64,11 +76,11 @@ export default function UploadPanel({ type, onGenerate, isGenerating }: UploadPa
         }
       >
         <input
-          ref={inputRef}
+          id={`memorial-files-${type}`}
           type="file"
           accept=".pdf"
           multiple
-          className="hidden"
+          className="sr-only"
           onChange={(e) => {
             if (e.target.files) addFiles(Array.from(e.target.files));
             e.target.value = '';
@@ -96,7 +108,7 @@ export default function UploadPanel({ type, onGenerate, isGenerating }: UploadPa
             </p>
           </>
         )}
-      </div>
+      </label>
 
       {files.length > 0 && (
         <ul className="max-h-36 w-full space-y-1.5 overflow-y-auto">
@@ -121,12 +133,19 @@ export default function UploadPanel({ type, onGenerate, isGenerating }: UploadPa
                 style={{ color: TP.border }}
                 className="cursor-pointer transition-colors hover:text-red-500"
                 title="Remover"
+                aria-label={`Remover arquivo ${file.name}`}
               >
                 <X size={14} />
               </button>
             </li>
           ))}
         </ul>
+      )}
+
+      {localError && (
+        <p className="w-full text-sm font-medium" style={{ color: TP.accentStrong }}>
+          {localError}
+        </p>
       )}
 
       <div className="w-full">

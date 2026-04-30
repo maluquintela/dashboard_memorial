@@ -17,6 +17,8 @@ dist-ssr
 # Coverage and reports
 coverage
 *.lcov
+playwright-report
+test-results
 
 # TypeScript cache
 *.tsbuildinfo
@@ -42,3 +44,8 @@ coverage
 
 # OS files
 Thumbs.db
+
+# Ralph local files
+.ralph_state.json
+.ralph_last_message.md
+.ralph_prompt.md

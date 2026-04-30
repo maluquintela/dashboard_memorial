@@ -10,6 +10,7 @@ import type {
   GeneratedMemorialListApiResponse,
   GeneratedMemorialDownloadApiResponse,
 } from '../types';
+import { normalizeApiError, toDashboardMemorialStatus } from './apiContracts';
 
 const LOCAL_API_URL = 'http://localhost:8000';
 const PRODUCTION_API_URL = 'https://api-memorial-production.up.railway.app';
@@ -29,17 +30,7 @@ const client = axios.create({
 client.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.code === 'ECONNABORTED') {
-      throw new Error('A requisição excedeu o tempo limite. Tente novamente.');
-    }
-    if (!error.response) {
-      throw new Error('Não foi possível conectar ao servidor. Verifique se a API está ativa.');
-    }
-    const data = error.response.data;
-    if (data?.detail) {
-      throw new Error(typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail));
-    }
-    throw error;
+    throw normalizeApiError(error);
   }
 );
 
@@ -66,7 +57,7 @@ function toMemorial(api: GeneratedMemorialApiResponse): Memorial {
     docxUrl: api.download_url,
     observations: api.observations ?? undefined,
     pdfFilenames: api.pdf_filenames,
-    status: api.status,
+    status: toDashboardMemorialStatus(api.status),
   };
 }
 
@@ -114,6 +105,9 @@ export async function refreshMemorialDownloadUrl(id: string): Promise<string> {
   const { data } = await client.get<GeneratedMemorialDownloadApiResponse>(
     `/api/v1/memoriais/${id}/download`
   );
+  if (!data.download_url) {
+    throw new Error('O memorial ainda não está disponível para download. Aguarde a conclusão da geração.');
+  }
   return data.download_url;
 }
 
