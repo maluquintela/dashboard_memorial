@@ -42,3 +42,8 @@ coverage
 
 # OS files
 Thumbs.db
+
+# Ralph local files
+.ralph_state.json
+.ralph_last_message.md
+.ralph_prompt.md

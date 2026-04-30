@@ -1,0 +1,65 @@
+{
+  "project": "dashboard-memorial",
+  "iteration_name": "ux-history-detail-first-pass",
+  "max_iterations_per_story": 3,
+  "global_constraints": [
+    "Trabalhar somente no repositório dashboard-memorial.",
+    "Não alterar o backend.",
+    "Não alterar contratos de API sem necessidade explícita.",
+    "Não adicionar dependências novas sem justificar no resultado final.",
+    "Preservar fluxos existentes de autenticação, upload, histórico e detalhe.",
+    "Priorizar mudanças pequenas, revisáveis e com baixo risco.",
+    "Não commitar alterações automaticamente.",
+    "Rodar os comandos de verificação disponíveis no projeto antes de finalizar."
+  ],
+  "user_stories": [
+    {
+      "id": "UX-001",
+      "title": "Melhorar histórico e detalhe de geração para uso real em produção",
+      "status": "todo",
+      "context": "O sistema já está deployado no Railway para testes básicos, mas ainda não está pronto para produção, principalmente por problemas de UX. A primeira iteração deve melhorar a experiência do usuário nas telas de histórico e detalhe de geração, sem mexer no backend.",
+      "problem": "O usuário precisa entender rapidamente quais memoriais foram gerados, quais estão pendentes, quais falharam, qual é o estado atual de cada item e o que pode fazer em seguida. A interface atual ainda não comunica bem estados, ações e responsividade.",
+      "scope_in": [
+        "Revisar tela de histórico/listagem de gerações.",
+        "Revisar tela de detalhe de uma geração/sessão.",
+        "Melhorar hierarquia visual, espaçamento, títulos e textos de apoio.",
+        "Adicionar ou melhorar estados de loading.",
+        "Adicionar ou melhorar estados vazios.",
+        "Adicionar ou melhorar estados de erro.",
+        "Melhorar responsividade para telas pequenas.",
+        "Garantir que ações principais fiquem claras.",
+        "Garantir que informações importantes não fiquem escondidas ou ambíguas."
+      ],
+      "scope_out": [
+        "Não implementar edição completa de dados extraídos.",
+        "Não criar novas tabelas no banco.",
+        "Não mexer no deploy do Railway.",
+        "Não alterar endpoints do backend.",
+        "Não alterar autenticação.",
+        "Não reescrever o design system inteiro.",
+        "Não fazer refatoração arquitetural ampla."
+      ],
+      "acceptance_criteria": [
+        "A tela de histórico deve mostrar claramente cada geração/sessão com status, data ou informação temporal disponível e ação principal.",
+        "A tela de histórico deve ter estado vazio compreensível quando não houver dados.",
+        "A tela de histórico deve ter estado de erro compreensível quando a busca falhar.",
+        "A tela de histórico deve ter estado de carregamento que não pareça tela quebrada.",
+        "A tela de detalhe deve deixar claro o status da geração/sessão.",
+        "A tela de detalhe deve orientar o usuário sobre o próximo passo possível.",
+        "A tela de detalhe deve exibir erros de forma acionável, sem mensagens técnicas cruas quando houver alternativa melhor.",
+        "O layout deve ser utilizável em desktop e em largura mobile aproximada de 375px.",
+        "O build do frontend deve passar.",
+        "Nenhuma funcionalidade existente deve ser removida."
+      ],
+      "manual_review_checklist": [
+        "Abrir a tela inicial do dashboard.",
+        "Abrir a tela de histórico.",
+        "Verificar histórico vazio, se possível.",
+        "Verificar histórico com itens reais, se possível.",
+        "Abrir detalhe de uma geração.",
+        "Verificar comportamento em largura mobile.",
+        "Verificar se o usuário entende o próximo passo sem precisar conhecer o código."
+      ]
+    }
+  ]
+}

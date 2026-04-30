@@ -13,6 +13,26 @@ type SidebarView = MemorialType | 'gerados';
 
 const MEMORIAL_TYPES: MemorialType[] = ['telecomunicacoes', 'eletrico', 'gas_natural', 'gas_glp'];
 
+function getFriendlyErrorMessage(error: unknown, fallback: string) {
+  if (!(error instanceof Error) || !error.message.trim()) {
+    return fallback;
+  }
+
+  if (error.message.includes('excedeu o tempo limite')) {
+    return 'A API demorou mais do que o esperado. Tente novamente em instantes.';
+  }
+
+  if (error.message.includes('conectar ao servidor')) {
+    return 'Não foi possível conectar à API. Verifique se o serviço está ativo e tente novamente.';
+  }
+
+  if (error.message.length > 180 || error.message.includes('{') || error.message.includes('Traceback')) {
+    return fallback;
+  }
+
+  return error.message;
+}
+
 export default function Dashboard() {
   const [activeView, setActiveView] = useState<SidebarView>('telecomunicacoes');
   const [memorials, setMemorials] = useState<Memorial[]>([]);
@@ -33,8 +53,11 @@ export default function Dashboard() {
     try {
       const res = await listMemorials();
       setMemorials(res.memorials);
-    } catch {
-      setHistoryError('Não foi possível carregar os memoriais gerados.');
+    } catch (error) {
+      setHistoryError(getFriendlyErrorMessage(
+        error,
+        'Não foi possível carregar os memoriais gerados. Tente novamente.'
+      ));
     } finally {
       setIsLoadingHistory(false);
     }
@@ -72,9 +95,10 @@ export default function Dashboard() {
       setHistoryCategory(res.memorial.type);
       setActiveView('gerados');
     } catch (error) {
-      const message = error instanceof Error
-        ? error.message
-        : 'Não foi possível gerar o memorial. Verifique a API e os arquivos enviados.';
+      const message = getFriendlyErrorMessage(
+        error,
+        'Não foi possível gerar o memorial. Verifique os arquivos enviados e tente novamente.'
+      );
 
       setGenerationError(message);
       const errorMemorial: Memorial = {
@@ -99,11 +123,10 @@ export default function Dashboard() {
       const downloadUrl = memorial.docxUrl || await refreshMemorialDownloadUrl(memorial.id);
       window.location.href = downloadUrl;
     } catch (error) {
-      setGenerationError(
-        error instanceof Error
-          ? error.message
-          : 'Não foi possível gerar o link de download do memorial.'
-      );
+      setGenerationError(getFriendlyErrorMessage(
+        error,
+        'Não foi possível gerar o link de download do memorial. Tente novamente.'
+      ));
     }
   };
 
@@ -117,11 +140,10 @@ export default function Dashboard() {
       setSelectedMemorial((current) => current?.id === memorial.id ? null : current);
       setGenerationError(null);
     } catch (error) {
-      setGenerationError(
-        error instanceof Error
-          ? error.message
-          : 'Não foi possível excluir o memorial.'
-      );
+      setGenerationError(getFriendlyErrorMessage(
+        error,
+        'Não foi possível excluir o memorial. Tente novamente.'
+      ));
     }
   };
 
@@ -135,7 +157,7 @@ export default function Dashboard() {
     >
       <AppHeader />
 
-      <div className="flex min-h-0 flex-1">
+      <div className="flex min-h-0 flex-1 flex-col md:flex-row">
         <Sidebar active={activeView} onChange={handleViewChange} />
 
         <main
@@ -197,11 +219,14 @@ export default function Dashboard() {
                   }}
                   onDownload={handleDownload}
                   onDelete={handleDelete}
+                  isLoading={isLoadingHistory}
+                  error={historyError}
+                  onRetry={fetchMemorials}
                 />
               </div>
             </div>
           ) : (
-            <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden px-5 pb-5 pt-4 lg:px-8">
+            <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 pb-5 pt-4 sm:px-5 lg:px-8 xl:overflow-hidden">
               <div>
                 <h2 className="text-2xl font-bold tracking-tight" style={{ color: TP.primary }}>
                   Memoriais gerados
@@ -218,8 +243,8 @@ export default function Dashboard() {
                 )}
               </div>
 
-              <div className="flex min-h-0 flex-1 gap-4 overflow-hidden">
-                <div className="min-h-0 min-w-0 flex-1">
+              <div className="flex min-h-0 flex-1 flex-col gap-4 xl:flex-row xl:overflow-hidden">
+                <div className="min-h-[22rem] min-w-0 flex-1 xl:min-h-0">
                   <GeneratedList
                     memorials={memorials}
                     activeCategory={historyCategory}
@@ -228,10 +253,13 @@ export default function Dashboard() {
                     onSelect={setSelectedMemorial}
                     onDownload={handleDownload}
                     onDelete={handleDelete}
+                    isLoading={isLoadingHistory}
+                    error={historyError}
+                    onRetry={fetchMemorials}
                   />
                 </div>
 
-                <div className="h-full w-full shrink-0 overflow-hidden xl:max-w-[52rem] xl:basis-[52rem]">
+                <div className="min-h-[28rem] w-full shrink-0 overflow-hidden xl:h-full xl:max-w-[52rem] xl:basis-[52rem]">
                   <ProjectDetail
                     memorial={visibleSelectedMemorial}
                     onDownload={handleDownload}

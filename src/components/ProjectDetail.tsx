@@ -1,4 +1,4 @@
-import { FileDown, FileText, MessageSquare, CalendarDays, Tag, Trash2 } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Clock3, FileDown, FileText, MessageSquare, CalendarDays, Tag, Trash2 } from 'lucide-react';
 import type { Memorial } from '../types';
 import { MEMORIAL_TYPE_LABELS } from '../types';
 import { TP, tpCardStyle } from '../theme';
@@ -11,6 +11,36 @@ interface ProjectDetailProps {
   onDelete: (memorial: Memorial) => void;
 }
 
+const statusMeta: Record<Memorial['status'], {
+  label: string;
+  detailLabel: string;
+  guidance: string;
+  badgeClass: string;
+  icon: React.ReactNode;
+}> = {
+  ready: {
+    label: 'Pronto',
+    detailLabel: 'Pronto para download',
+    guidance: 'Baixe o documento .docx e revise o conteúdo antes de enviar ao cliente.',
+    badgeClass: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200',
+    icon: <CheckCircle2 size={16} />,
+  },
+  generating: {
+    label: 'Gerando',
+    detailLabel: 'Em geração',
+    guidance: 'A geração ainda está em andamento. Aguarde a conclusão antes de baixar o arquivo.',
+    badgeClass: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200',
+    icon: <Clock3 size={16} />,
+  },
+  error: {
+    label: 'Erro',
+    detailLabel: 'Erro na geração',
+    guidance: 'Revise os arquivos enviados e tente gerar o memorial novamente. Se o erro persistir, verifique a conexão com a API.',
+    badgeClass: 'bg-red-50 text-red-700 ring-1 ring-red-200',
+    icon: <AlertTriangle size={16} />,
+  },
+};
+
 export default function ProjectDetail({ memorial, onDownload, onDelete }: ProjectDetailProps) {
   if (!memorial) {
     return (
@@ -19,22 +49,27 @@ export default function ProjectDetail({ memorial, onDownload, onDelete }: Projec
         style={tpCardStyle}
       >
         <FileText size={32} style={{ color: TP.border }} />
-        <p className="text-sm" style={{ color: TP.muted }}>
+        <p className="text-sm font-semibold" style={{ color: TP.text }}>
+          Nenhum memorial selecionado
+        </p>
+        <p className="max-w-sm text-sm" style={{ color: TP.muted }}>
           Selecione um projeto na lista para ver os detalhes.
         </p>
       </div>
     );
   }
 
+  const currentStatus = statusMeta[memorial.status];
+
   return (
     <div className="flex h-full flex-col overflow-y-auto" style={tpCardStyle}>
       <div className="border-b px-5 py-4" style={{ borderColor: TP.border }}>
-        <div className="flex items-start justify-between gap-3">
-          <div>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
             <h3 className="text-base font-bold leading-snug" style={{ color: TP.text }}>
               {memorial.projectName}
             </h3>
-            <div className="mt-1.5 flex items-center gap-3">
+            <div className="mt-1.5 flex flex-wrap items-center gap-3">
               <span className="flex items-center gap-1 text-xs" style={{ color: TP.muted }}>
                 <Tag size={11} />
                 {MEMORIAL_TYPE_LABELS[memorial.type]}
@@ -47,19 +82,10 @@ export default function ProjectDetail({ memorial, onDownload, onDelete }: Projec
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <span
-              className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
-                memorial.status === 'ready'
-                  ? 'bg-emerald-50 text-emerald-600'
-                  : memorial.status === 'error'
-                    ? 'bg-red-50 text-red-600'
-                    : 'bg-amber-50 text-amber-600'
-              }`}
+              className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${currentStatus.badgeClass}`}
             >
-              {memorial.status === 'ready'
-                ? 'Pronto'
-                : memorial.status === 'error'
-                  ? 'Erro'
-                  : 'Gerando'}
+              {currentStatus.icon}
+              {currentStatus.label}
             </span>
             <button
               type="button"
@@ -75,6 +101,30 @@ export default function ProjectDetail({ memorial, onDownload, onDelete }: Projec
       </div>
 
       <div className="flex-1 space-y-5 p-5">
+        <section
+          className="rounded-xl border p-3"
+          style={{
+            borderColor: memorial.status === 'error' ? 'rgba(248, 113, 113, 0.45)' : TP.border,
+            background: memorial.status === 'error' ? '#FEF2F2' : TP.page,
+          }}
+        >
+          <div className="flex items-start gap-2.5">
+            <span
+              className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${currentStatus.badgeClass}`}
+            >
+              {currentStatus.icon}
+            </span>
+            <div>
+              <p className="text-sm font-semibold" style={{ color: TP.text }}>
+                Próximo passo
+              </p>
+              <p className="mt-0.5 text-sm leading-relaxed" style={{ color: TP.muted }}>
+                {currentStatus.guidance}
+              </p>
+            </div>
+          </div>
+        </section>
+
         <section>
           <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest" style={{ color: TP.muted }}>
             Preview da geração
@@ -86,7 +136,7 @@ export default function ProjectDetail({ memorial, onDownload, onDelete }: Projec
               background: TP.page,
             }}
           >
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
               <div
                 className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
                 style={{ background: 'rgba(76, 79, 191, 0.12)' }}
@@ -105,7 +155,7 @@ export default function ProjectDetail({ memorial, onDownload, onDelete }: Projec
                 type="button"
                 onClick={() => onDownload(memorial)}
                 disabled={memorial.status !== 'ready'}
-                className="tp-btn-primary flex shrink-0 items-center gap-1 px-3 py-1.5 text-xs disabled:cursor-not-allowed disabled:opacity-40"
+                className="tp-btn-primary flex shrink-0 items-center justify-center gap-1 px-3 py-1.5 text-xs disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <FileDown size={12} />
                 Baixar
@@ -142,11 +192,7 @@ export default function ProjectDetail({ memorial, onDownload, onDelete }: Projec
                   Status
                 </p>
                 <p className="font-medium" style={{ color: TP.text }}>
-                  {memorial.status === 'ready'
-                    ? 'Pronto para download'
-                    : memorial.status === 'error'
-                      ? 'Erro na geração'
-                      : 'Em geração'}
+                  {currentStatus.detailLabel}
                 </p>
               </div>
             </div>
