@@ -1393,3 +1393,89 @@ Bloqueio de ambiente confirmado:
 ## Story RDY-008 concluída
 
 Tentativa bem-sucedida: 2
+
+## Iteração RDY-009: checklist final de staging e produção
+
+Objetivo:
+
+- fazer revisão final de production readiness;
+- coordenar a revisão pelo repositório dashboard-memorial;
+- inspecionar o backend em modo leitura;
+- não fazer deploy real;
+- não alterar backend;
+- documentar variáveis, smoke tests, riscos, rollback e checklist Railway;
+- separar claramente pronto para staging de pronto para produção;
+- registrar bloqueadores sem mascarar problemas.
+
+Diretrizes:
+
+1. Trabalhar no dashboard-memorial.
+2. Tratar api_memorial_descritivo como leitura apenas.
+3. Não usar secrets reais.
+4. Não alterar templates DOCX.
+5. Não mexer no Railway diretamente.
+6. Não fazer deploy.
+7. Rodar python verify.py.
+8. Rodar testes E2E se disponíveis.
+9. Criar docs/production-readiness/.
+10. Atualizar learnings.md em modo append-only.
+
+## RDY-009 tentativa 1: checklist final documentado
+
+Revisão executada no repositório `dashboard_memorial`, com backend `~/Projects/api_memorial_descritivo` tratado somente como referência em modo leitura.
+
+Achados do dashboard:
+
+- Scripts identificados: `dev`, `lint`, `typecheck`, `test`, `build`, `e2e`, `e2e:ui` e `preview`.
+- `verify.py` executa, quando disponíveis, `lint`, `typecheck`, `test`, `build` e `e2e`.
+- `VITE_API_URL` é a variável de API do frontend e é build-time por usar `import.meta.env`.
+- Variáveis `VITE_*` não devem carregar secrets porque entram no bundle do navegador.
+- O dashboard tem fallback de produção hardcoded em `src/services/api.ts`; isso deve ser tratado como risco operacional e não como substituto de `VITE_API_URL`.
+
+Achados do backend em leitura:
+
+- Start local identificado: `.venv/bin/uvicorn app.main:app --reload --host 127.0.0.1 --port 8000`.
+- Start Railway identificado no `Procfile`: `uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}`.
+- Healthchecks existentes: `GET /health/live` e `GET /health/ready`.
+- Para Railway, o path recomendado é `/health/ready`, porque valida readiness além de liveness.
+- CORS é configurado por `CORS_ALLOWED_ORIGINS`, com fallback para `CORS_ORIGINS`; em `production`, origem explícita é obrigatória.
+- Storage, histórico, download e exclusão de memoriais persistidos dependem de Supabase.
+- Variáveis backend relevantes incluem `APP_ENV`, `CORS_ALLOWED_ORIGINS`, `GENERATED_MEMORIALS_BUCKET`, `GENERATED_MEMORIALS_SIGNED_URL_TTL`, `SUPABASE_URL`, `SUPABASE_KEY`, `USE_LLM_EXTRACTION`, `OPENAI_API_KEY`, `OPENAI_MODEL`, `SESSIONS_DIR` e `PORT`.
+- GLP por arquivos depende de extração LLM habilitada.
+
+Documentação criada:
+
+- `docs/production-readiness/README.md`
+- `docs/production-readiness/release-checklist.md`
+- `docs/production-readiness/environment-matrix.md`
+- `docs/production-readiness/smoke-test-plan.md`
+- `docs/production-readiness/railway-checklist.md`
+- `docs/production-readiness/known-risks.md`
+- `docs/production-readiness/rollback-plan.md`
+- `docs/production-readiness/go-no-go.md`
+
+Decisão registrada:
+
+- Pronto para staging: não.
+- Pronto para produção: não.
+
+Itens não validados nesta revisão:
+
+- Railway real.
+- Deploy real.
+- Supabase real.
+- Secrets reais.
+- Smoke test real de staging.
+- Rollback real.
+
+Validação executada:
+
+- `python verify.py` não executou porque o binário `python` não existe neste ambiente.
+- `python3 verify.py` executou `lint`, `typecheck`, `test` e `build` com sucesso.
+- `python3 verify.py` falhou no passo `e2e` porque o `webServer` do Playwright não conseguiu iniciar.
+- Causa confirmada: `VITE_API_URL=http://127.0.0.1:8000 npm run dev -- --host 127.0.0.1 --port 5173` falhou com `listen EPERM: operation not permitted 127.0.0.1:5173`.
+
+
+## Story RDY-009 concluída
+
+Tentativa bem-sucedida: 1
