@@ -241,7 +241,7 @@ export default function Dashboard() {
               </div>
 
               <div className="flex min-h-0 flex-1 flex-col gap-4 xl:flex-row xl:overflow-hidden">
-                <div className="min-h-[22rem] min-w-0 flex-1 xl:min-h-0">
+                <div className="min-h-[22rem] min-w-0 flex-1 xl:min-h-0 xl:min-w-[24rem]">
                   <GeneratedList
                     memorials={memorials}
                     activeCategory={historyCategory}
@@ -256,7 +256,7 @@ export default function Dashboard() {
                   />
                 </div>
 
-                <div className="min-h-[28rem] w-full shrink-0 overflow-hidden xl:h-full xl:max-w-[52rem] xl:basis-[52rem]">
+                <div className="min-h-[28rem] w-full shrink-0 overflow-hidden xl:h-full xl:max-w-[36rem] xl:basis-[36rem] 2xl:max-w-[52rem] 2xl:basis-[52rem]">
                   <ProjectDetail
                     memorial={visibleSelectedMemorial}
                     onDownload={handleDownload}

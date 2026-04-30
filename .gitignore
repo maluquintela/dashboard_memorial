@@ -17,6 +17,8 @@ dist-ssr
 # Coverage and reports
 coverage
 *.lcov
+playwright-report
+test-results
 
 # TypeScript cache
 *.tsbuildinfo

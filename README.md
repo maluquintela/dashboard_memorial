@@ -83,6 +83,29 @@ npm run preview
 
 Serve localmente a build gerada.
 
+```bash
+npm run e2e
+```
+
+Executa a suíte E2E em Chromium com Playwright Test. Antes de rodar, mantenha a API
+local ativa em `http://127.0.0.1:8000`:
+
+```bash
+cd ~/Projects/api_memorial_descritivo
+.venv/bin/uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+A suíte contém um smoke `real-backend` que valida o dashboard contra essa API local e
+testes `contract-mocked` que interceptam contratos críticos no navegador para cobrir
+histórico, detalhe, download, exclusão, mobile, loading e erros seguros sem depender do
+Railway nem de credenciais reais.
+
+```bash
+npm run e2e:ui
+```
+
+Abre a interface do Playwright para depuração local dos testes E2E.
+
 ## Produção
 
 Recomendação atual:

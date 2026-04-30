@@ -54,7 +54,7 @@ export default function GeneratedList({
 
   return (
     <div
-      className="flex h-full flex-col overflow-hidden sm:flex-row"
+      className="flex h-full w-full flex-col overflow-hidden sm:flex-row"
       style={tpCardStyle}
     >
       <div
@@ -182,7 +182,7 @@ export default function GeneratedList({
                     aria-label={`Selecionar ${memorial.projectName}`}
                     aria-current={selectedId === memorial.id ? 'true' : undefined}
                     onClick={() => onSelect(memorial)}
-                    className="flex w-full min-w-0 flex-1 cursor-pointer items-start gap-3 rounded-lg text-left focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#4c4fbf] sm:items-center"
+                    className="flex min-h-14 w-full min-w-0 flex-1 cursor-pointer items-start gap-3 rounded-lg px-1 py-1 text-left focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#4c4fbf] sm:basis-0 sm:items-center"
                   >
                     <div className="min-w-0 flex-1">
                       <p

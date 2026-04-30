@@ -47,7 +47,7 @@ def main() -> None:
     package_json = json.loads(package_path.read_text())
     pm = detect_package_manager()
 
-    for script in ["lint", "typecheck", "test", "build"]:
+    for script in ["lint", "typecheck", "test", "build", "e2e"]:
         if script_exists(package_json, script):
             run_script(pm, script)
         else:
