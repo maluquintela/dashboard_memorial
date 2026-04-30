@@ -14,9 +14,15 @@ export default function UploadPanel({ type, onGenerate, isGenerating }: UploadPa
   const [files, setFiles] = useState<File[]>([]);
   const [observations, setObservations] = useState('');
   const [isDragActive, setIsDragActive] = useState(false);
+  const [localError, setLocalError] = useState<string | null>(null);
 
   const addFiles = (incoming: File[]) => {
     const pdfs = incoming.filter((f) => f.name.toLowerCase().endsWith('.pdf'));
+    if (pdfs.length !== incoming.length) {
+      setLocalError('Envie apenas arquivos PDF aceitos pelo memorial.');
+    } else {
+      setLocalError(null);
+    }
     if (pdfs.length === 0) return;
     setFiles((prev) => {
       const existing = new Set(prev.map((f) => f.name));
@@ -30,6 +36,11 @@ export default function UploadPanel({ type, onGenerate, isGenerating }: UploadPa
 
   const handleGenerate = async () => {
     if (files.length === 0) return;
+    if (files.some((file) => file.size === 0)) {
+      setLocalError('Um dos arquivos está vazio. Remova esse arquivo e tente novamente.');
+      return;
+    }
+    setLocalError(null);
     const generated = await onGenerate(type, files, observations);
     if (generated) {
       setFiles([]);
@@ -129,6 +140,12 @@ export default function UploadPanel({ type, onGenerate, isGenerating }: UploadPa
             </li>
           ))}
         </ul>
+      )}
+
+      {localError && (
+        <p className="w-full text-sm font-medium" style={{ color: TP.accentStrong }}>
+          {localError}
+        </p>
       )}
 
       <div className="w-full">

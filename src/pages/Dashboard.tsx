@@ -7,6 +7,7 @@ import GeneratedList from '../components/GeneratedList';
 import ProjectDetail from '../components/ProjectDetail';
 import type { Memorial, MemorialType } from '../types';
 import { deleteMemorial, generateMemorial, listMemorials, refreshMemorialDownloadUrl } from '../services/api';
+import { normalizeApiError } from '../services/apiContracts';
 import { TP, tpCardStyle } from '../theme';
 
 type SidebarView = MemorialType | 'gerados';
@@ -14,23 +15,8 @@ type SidebarView = MemorialType | 'gerados';
 const MEMORIAL_TYPES: MemorialType[] = ['telecomunicacoes', 'eletrico', 'gas_natural', 'gas_glp'];
 
 function getFriendlyErrorMessage(error: unknown, fallback: string) {
-  if (!(error instanceof Error) || !error.message.trim()) {
-    return fallback;
-  }
-
-  if (error.message.includes('excedeu o tempo limite')) {
-    return 'A API demorou mais do que o esperado. Tente novamente em instantes.';
-  }
-
-  if (error.message.includes('conectar ao servidor')) {
-    return 'Não foi possível conectar à API. Verifique se o serviço está ativo e tente novamente.';
-  }
-
-  if (error.message.length > 180 || error.message.includes('{') || error.message.includes('Traceback')) {
-    return fallback;
-  }
-
-  return error.message;
+  const normalized = normalizeApiError(error);
+  return normalized.message || fallback;
 }
 
 export default function Dashboard() {
@@ -119,7 +105,11 @@ export default function Dashboard() {
   };
 
   const handleDownload = async (memorial: Memorial) => {
-    if (memorial.status !== 'ready') return;
+    setGenerationError(null);
+    if (memorial.status !== 'ready') {
+      setGenerationError('O memorial ainda não está disponível para download. Aguarde a conclusão da geração.');
+      return;
+    }
 
     try {
       const downloadUrl = memorial.docxUrl || await refreshMemorialDownloadUrl(memorial.id);
@@ -241,6 +231,11 @@ export default function Dashboard() {
                 {historyError && (
                   <p className="mt-2 text-sm font-medium" style={{ color: TP.accentStrong }}>
                     {historyError}
+                  </p>
+                )}
+                {generationError && (
+                  <p className="mt-2 text-sm font-medium" style={{ color: TP.accentStrong }}>
+                    {generationError}
                   </p>
                 )}
               </div>
