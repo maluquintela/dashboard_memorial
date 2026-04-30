@@ -25,7 +25,7 @@ const items: NavItem[] = [
 
 export default function Sidebar({ active, onChange }: SidebarProps) {
   const linkBase =
-    'flex w-auto items-center gap-3 rounded-r-lg border-l-4 px-3 py-2.5 text-sm font-medium transition-all md:w-full';
+    'flex w-full min-w-0 items-center gap-2 rounded-r-lg border-l-4 px-3 py-2.5 text-left text-sm font-medium transition-all md:gap-3';
 
   return (
     <aside
@@ -47,7 +47,7 @@ export default function Sidebar({ active, onChange }: SidebarProps) {
         </p>
       </div>
 
-      <nav className="flex gap-2 overflow-x-auto p-3 md:flex-1 md:flex-col md:gap-0 md:space-y-1 md:overflow-y-auto">
+      <nav className="grid grid-cols-2 gap-2 p-3 sm:grid-cols-3 md:flex md:flex-1 md:flex-col md:gap-0 md:space-y-1 md:overflow-y-auto">
         <p
           className="hidden px-2 text-[10px] font-semibold uppercase tracking-widest md:mb-2 md:block"
           style={{ color: TP.muted }}
@@ -61,20 +61,20 @@ export default function Sidebar({ active, onChange }: SidebarProps) {
               key={item.id}
               type="button"
               onClick={() => onChange(item.id)}
-              className={`${linkBase} min-w-max md:min-w-0`}
+              className={linkBase}
               style={{
                 borderLeftColor: isOn ? TP.accent : 'transparent',
                 background: isOn ? TP.navActiveBg : 'transparent',
                 color: isOn ? TP.primary : TP.text,
               }}
             >
-              <span style={{ color: isOn ? TP.accent : TP.muted }}>{item.icon}</span>
-              {item.label}
+              <span className="shrink-0" style={{ color: isOn ? TP.accent : TP.muted }}>{item.icon}</span>
+              <span className="truncate">{item.label}</span>
             </button>
           );
         })}
 
-        <div className="md:pt-4">
+        <div className="col-span-2 sm:col-span-1 md:pt-4">
           <p
             className="hidden px-2 text-[10px] font-semibold uppercase tracking-widest md:mb-2 md:block"
             style={{ color: TP.muted }}
@@ -84,17 +84,17 @@ export default function Sidebar({ active, onChange }: SidebarProps) {
           <button
             type="button"
             onClick={() => onChange('gerados')}
-            className={`${linkBase} min-w-max md:min-w-0`}
+            className={linkBase}
             style={{
               borderLeftColor: active === 'gerados' ? TP.accent : 'transparent',
               background: active === 'gerados' ? TP.navActiveBg : 'transparent',
               color: active === 'gerados' ? TP.primary : TP.text,
             }}
           >
-            <span style={{ color: active === 'gerados' ? TP.accent : TP.muted }}>
+            <span className="shrink-0" style={{ color: active === 'gerados' ? TP.accent : TP.muted }}>
               <FolderOpen size={18} />
             </span>
-            Memoriais gerados
+            <span className="truncate">Memoriais gerados</span>
           </button>
         </div>
       </nav>

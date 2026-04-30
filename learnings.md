@@ -15,3 +15,13 @@ Este arquivo deve acumular aprendizados entre tentativas do Ralph.
 ## Story UX-001 concluída
 
 Tentativa bem-sucedida: 1
+
+
+## Story UX-002 concluída
+
+Tentativa bem-sucedida: 1
+
+
+## Story UX-003 concluída
+
+Tentativa bem-sucedida: 1

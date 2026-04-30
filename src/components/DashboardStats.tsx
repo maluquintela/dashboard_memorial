@@ -6,9 +6,10 @@ import { TP } from '../theme';
 interface DashboardStatsProps {
   memorials: Memorial[];
   activeType: MemorialType;
+  isLoading?: boolean;
 }
 
-export default function DashboardStats({ memorials, activeType }: DashboardStatsProps) {
+export default function DashboardStats({ memorials, activeType, isLoading = false }: DashboardStatsProps) {
   const categoryMemorials = memorials.filter((m) => m.type === activeType);
   const total = categoryMemorials.length;
   const totalGenerated = memorials.length;
@@ -30,7 +31,7 @@ export default function DashboardStats({ memorials, activeType }: DashboardStats
   ];
 
   return (
-    <section aria-label="Visão geral">
+    <section aria-label="Visão geral" aria-busy={isLoading}>
       <h2 className="mb-3 text-sm font-semibold" style={{ color: TP.muted }}>
         Visão geral
       </h2>
@@ -52,11 +53,15 @@ export default function DashboardStats({ memorials, activeType }: DashboardStats
                 <p className="text-xs font-medium" style={{ color: TP.muted }}>
                   {c.label}
                 </p>
-                <p className="mt-1 text-2xl font-bold tabular-nums" style={{ color: TP.text }}>
-                  {c.value}
-                </p>
+                {isLoading ? (
+                  <div className="mt-2 h-8 w-14 animate-pulse rounded bg-slate-200" />
+                ) : (
+                  <p className="mt-1 text-2xl font-bold tabular-nums" style={{ color: TP.text }}>
+                    {c.value}
+                  </p>
+                )}
                 <p className="mt-0.5 text-[11px]" style={{ color: TP.muted }}>
-                  {c.sub}
+                  {isLoading ? 'Carregando histórico...' : c.sub}
                 </p>
               </div>
               <div
@@ -74,7 +79,7 @@ export default function DashboardStats({ memorials, activeType }: DashboardStats
                 color: TP.primary,
               }}
             >
-              Clique para ver detalhes →
+              {isLoading ? 'Aguarde os dados do histórico' : 'Clique para ver detalhes →'}
             </div>
           </article>
         ))}

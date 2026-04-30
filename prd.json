@@ -1,64 +1,75 @@
 {
   "project": "dashboard-memorial",
-  "iteration_name": "ux-history-detail-first-pass",
+  "iteration_name": "ux-history-item-semantic-click-area",
   "max_iterations_per_story": 3,
   "global_constraints": [
     "Trabalhar somente no repositório dashboard-memorial.",
     "Não alterar o backend.",
-    "Não alterar contratos de API sem necessidade explícita.",
-    "Não adicionar dependências novas sem justificar no resultado final.",
-    "Preservar fluxos existentes de autenticação, upload, histórico e detalhe.",
-    "Priorizar mudanças pequenas, revisáveis e com baixo risco.",
-    "Não commitar alterações automaticamente.",
-    "Rodar os comandos de verificação disponíveis no projeto antes de finalizar."
+    "Não alterar contratos de API.",
+    "Não adicionar dependências novas.",
+    "Não reescrever o dashboard.",
+    "Fazer a menor alteração possível.",
+    "Preservar os comportamentos que já passaram na UX-002.",
+    "Usar browser_review_notes.md como fonte principal do problema restante.",
+    "Rodar build, lint, typecheck e testes disponíveis antes de finalizar."
   ],
   "user_stories": [
     {
-      "id": "UX-001",
-      "title": "Melhorar histórico e detalhe de geração para uso real em produção",
+      "id": "UX-003",
+      "title": "Corrigir área clicável e semântica do item do histórico",
       "status": "todo",
-      "context": "O sistema já está deployado no Railway para testes básicos, mas ainda não está pronto para produção, principalmente por problemas de UX. A primeira iteração deve melhorar a experiência do usuário nas telas de histórico e detalhe de geração, sem mexer no backend.",
-      "problem": "O usuário precisa entender rapidamente quais memoriais foram gerados, quais estão pendentes, quais falharam, qual é o estado atual de cada item e o que pode fazer em seguida. A interface atual ainda não comunica bem estados, ações e responsividade.",
+      "context": "Após a UX-002, quase todos os pontos passaram. O único problema restante é que o item do histórico funciona visualmente ao clicar no texto, mas o elemento semântico li[role=button] está colapsado em largura e sobreposto ou adjacente aos botões internos. Isso faz o clique pelo centro do elemento acessível cair em Baixar/Excluir em vez de selecionar a geração.",
+      "problem": "O item do histórico precisa ter uma área de seleção semanticamente correta, larga e previsível, sem conflito com os botões internos de Baixar e Excluir.",
+      "source_files_to_review_first": [
+        "browser_review_notes.md",
+        "src/components/GeneratedList.tsx",
+        "src/pages/Dashboard.tsx"
+      ],
       "scope_in": [
-        "Revisar tela de histórico/listagem de gerações.",
-        "Revisar tela de detalhe de uma geração/sessão.",
-        "Melhorar hierarquia visual, espaçamento, títulos e textos de apoio.",
-        "Adicionar ou melhorar estados de loading.",
-        "Adicionar ou melhorar estados vazios.",
-        "Adicionar ou melhorar estados de erro.",
-        "Melhorar responsividade para telas pequenas.",
-        "Garantir que ações principais fiquem claras.",
-        "Garantir que informações importantes não fiquem escondidas ou ambíguas."
+        "Remover role=button do li se o li contém botões internos.",
+        "Usar o li como container/list item, não como botão interativo principal.",
+        "Criar ou ajustar um button nativo para ser a área clicável de seleção da geração.",
+        "Garantir que o botão de seleção ocupe a largura real disponível da linha.",
+        "Usar classes/layout equivalentes a flex-1, min-w-0 e w-full quando fizer sentido.",
+        "Manter Baixar e Excluir como botões separados e irmãos da área de seleção.",
+        "Garantir que clicar em Baixar não selecione acidentalmente a geração.",
+        "Garantir que clicar em Excluir não selecione acidentalmente a geração.",
+        "Garantir que o foco por teclado passe pela seleção, depois pelas ações, de forma previsível.",
+        "Preservar responsividade mobile que já passou na UX-002."
       ],
       "scope_out": [
-        "Não implementar edição completa de dados extraídos.",
-        "Não criar novas tabelas no banco.",
-        "Não mexer no deploy do Railway.",
-        "Não alterar endpoints do backend.",
-        "Não alterar autenticação.",
-        "Não reescrever o design system inteiro.",
-        "Não fazer refatoração arquitetural ampla."
+        "Não alterar o backend.",
+        "Não alterar endpoints.",
+        "Não alterar fluxo de upload.",
+        "Não alterar navegação mobile além do necessário para preservar o comportamento atual.",
+        "Não refatorar componentes não relacionados.",
+        "Não adicionar nova biblioteca.",
+        "Não mudar design visual além do necessário para corrigir área clicável e semântica."
       ],
       "acceptance_criteria": [
-        "A tela de histórico deve mostrar claramente cada geração/sessão com status, data ou informação temporal disponível e ação principal.",
-        "A tela de histórico deve ter estado vazio compreensível quando não houver dados.",
-        "A tela de histórico deve ter estado de erro compreensível quando a busca falhar.",
-        "A tela de histórico deve ter estado de carregamento que não pareça tela quebrada.",
-        "A tela de detalhe deve deixar claro o status da geração/sessão.",
-        "A tela de detalhe deve orientar o usuário sobre o próximo passo possível.",
-        "A tela de detalhe deve exibir erros de forma acionável, sem mensagens técnicas cruas quando houver alternativa melhor.",
-        "O layout deve ser utilizável em desktop e em largura mobile aproximada de 375px.",
-        "O build do frontend deve passar.",
-        "Nenhuma funcionalidade existente deve ser removida."
+        "O item da geração não deve depender de li[role=button] contendo botões internos.",
+        "A área textual/corpo da geração deve ser clicável por um button nativo ou estrutura semanticamente equivalente.",
+        "A área clicável de seleção deve ocupar a largura disponível da linha, não ficar colapsada.",
+        "Clicar no corpo da geração deve abrir o detalhe correto.",
+        "Clicar em Baixar deve continuar chamando download sem selecionar acidentalmente.",
+        "Clicar em Excluir deve continuar abrindo confirmação/executando exclusão sem selecionar acidentalmente.",
+        "A navegação por teclado deve conseguir focar a seleção do item.",
+        "A navegação por teclado deve conseguir focar Baixar e Excluir separadamente.",
+        "Mobile 390px deve continuar sem regressão.",
+        "Loading, upload com erro e aria-label de remover arquivo devem continuar passando.",
+        "Build, lint, typecheck e testes disponíveis devem passar."
       ],
       "manual_review_checklist": [
-        "Abrir a tela inicial do dashboard.",
-        "Abrir a tela de histórico.",
-        "Verificar histórico vazio, se possível.",
-        "Verificar histórico com itens reais, se possível.",
-        "Abrir detalhe de uma geração.",
-        "Verificar comportamento em largura mobile.",
-        "Verificar se o usuário entende o próximo passo sem precisar conhecer o código."
+        "Abrir Memoriais gerados em desktop.",
+        "Inspecionar o primeiro item do histórico.",
+        "Confirmar que o li não é mais o botão semântico colapsado se ele contém botões internos.",
+        "Confirmar que o botão/área de seleção ocupa a largura disponível do texto.",
+        "Clicar no centro da área acessível de seleção e verificar se abre detalhe.",
+        "Clicar em Baixar e verificar se não seleciona indevidamente.",
+        "Clicar em Excluir e verificar se não seleciona indevidamente.",
+        "Usar Tab para passar pela seleção, Baixar e Excluir.",
+        "Testar novamente mobile em 390px.",
+        "Rodar verify.py."
       ]
     }
   ]

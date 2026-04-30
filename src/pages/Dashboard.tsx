@@ -94,6 +94,7 @@ export default function Dashboard() {
       setSelectedMemorial(res.memorial);
       setHistoryCategory(res.memorial.type);
       setActiveView('gerados');
+      return true;
     } catch (error) {
       const message = getFriendlyErrorMessage(
         error,
@@ -111,6 +112,7 @@ export default function Dashboard() {
       };
       setSelectedMemorial(errorMemorial);
       await fetchMemorials();
+      return false;
     } finally {
       setIsGenerating(false);
     }
@@ -179,7 +181,7 @@ export default function Dashboard() {
                 </p>
               </div>
 
-              <DashboardStats memorials={memorials} activeType={activeType} />
+              <DashboardStats memorials={memorials} activeType={activeType} isLoading={isLoadingHistory} />
 
               {(historyError || generationError) && (
                 <div

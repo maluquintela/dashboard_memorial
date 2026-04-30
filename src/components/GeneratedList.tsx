@@ -172,15 +172,17 @@ export default function GeneratedList({
               {filtered.map((memorial) => (
                 <li
                   key={memorial.id}
-                  className="group flex flex-col gap-3 px-4 py-3 transition-colors sm:flex-row sm:items-center sm:gap-2"
+                  className="group flex flex-col gap-3 px-4 py-3 transition-colors hover:bg-slate-50 sm:flex-row sm:items-center sm:gap-3"
                   style={{
                     background: selectedId === memorial.id ? TP.navActiveBg : undefined,
                   }}
                 >
                   <button
                     type="button"
+                    aria-label={`Selecionar ${memorial.projectName}`}
+                    aria-current={selectedId === memorial.id ? 'true' : undefined}
                     onClick={() => onSelect(memorial)}
-                    className="flex min-w-0 flex-1 items-start gap-3 text-left sm:items-center"
+                    className="flex w-full min-w-0 flex-1 cursor-pointer items-start gap-3 rounded-lg text-left focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[#4c4fbf] sm:items-center"
                   >
                     <div className="min-w-0 flex-1">
                       <p
