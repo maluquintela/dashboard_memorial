@@ -1,5 +1,5 @@
 export type MemorialType = 'telecomunicacoes' | 'eletrico' | 'gas_natural' | 'gas_glp';
-export type ApiMemorialType = 'telecom' | 'eletrico' | 'gas-natural' | 'glp';
+export type ApiMemorialType = 'telecom' | 'eletrico' | 'gas-natural' | 'glp' | 'glp_v2';
 export type ApiMemorialStatus = 'processing' | 'pending' | 'ready' | 'succeeded' | 'failed' | string;
 
 export interface Memorial {
@@ -10,6 +10,7 @@ export interface Memorial {
   docxUrl?: string;
   observations?: string;
   pdfFilenames?: string[];
+  warnings?: string[];
   status: 'generating' | 'ready' | 'error';
 }
 
@@ -46,6 +47,7 @@ export interface GeneratedMemorialApiResponse {
   created_at: string;
   updated_at: string;
   download_url: string;
+  extraction_report?: unknown;
 }
 
 export interface GeneratedMemorialListApiResponse {

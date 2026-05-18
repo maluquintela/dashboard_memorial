@@ -53,6 +53,9 @@ export class NormalizedApiError extends Error {
   }
 }
 
+export const BATCH_MERGE_FALLBACK_WARNING =
+  'O memorial foi gerado, mas uma etapa automática de conferência demorou mais do que o esperado. O sistema usou as informações extraídas diretamente das pranchas para continuar. Recomendamos revisar os campos principais antes de usar o documento final.';
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
@@ -231,4 +234,13 @@ export function toDashboardMemorialStatus(status: string): Memorial['status'] {
 
 export function canDownloadApiStatus(status: string): boolean {
   return status === 'ready' || status === 'succeeded';
+}
+
+export function hasBatchMergeFallback(extractionReport: unknown): boolean {
+  if (!isRecord(extractionReport)) return false;
+  const crossValidation = extractionReport.cross_validation;
+  return (
+    isRecord(crossValidation) &&
+    crossValidation.batch_merge_fallback_used === true
+  );
 }

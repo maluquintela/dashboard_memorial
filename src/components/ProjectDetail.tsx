@@ -125,6 +125,32 @@ export default function ProjectDetail({ memorial, onDownload, onDelete }: Projec
           </div>
         </section>
 
+        {memorial.warnings && memorial.warnings.length > 0 && (
+          <section
+            className="rounded-xl border p-3"
+            style={{
+              borderColor: 'rgba(245, 158, 11, 0.4)',
+              background: '#FFFBEB',
+            }}
+          >
+            <div className="flex items-start gap-2.5">
+              <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700">
+                <AlertTriangle size={16} />
+              </span>
+              <div>
+                <p className="text-sm font-semibold" style={{ color: TP.text }}>
+                  Atenção antes de usar o documento
+                </p>
+                {memorial.warnings.map((warning) => (
+                  <p key={warning} className="mt-0.5 text-sm leading-relaxed text-amber-800">
+                    {warning}
+                  </p>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
         <section>
           <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest" style={{ color: TP.muted }}>
             Preview da geração

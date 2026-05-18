@@ -10,7 +10,12 @@ import type {
   GeneratedMemorialListApiResponse,
   GeneratedMemorialDownloadApiResponse,
 } from '../types';
-import { normalizeApiError, toDashboardMemorialStatus } from './apiContracts';
+import {
+  BATCH_MERGE_FALLBACK_WARNING,
+  hasBatchMergeFallback,
+  normalizeApiError,
+  toDashboardMemorialStatus,
+} from './apiContracts';
 
 const LOCAL_API_URL = 'http://localhost:8000';
 const PRODUCTION_API_URL = 'https://api-memorial-production.up.railway.app';
@@ -34,11 +39,18 @@ client.interceptors.response.use(
   }
 );
 
-const API_TYPE_BY_UI_TYPE: Record<MemorialType, ApiMemorialType> = {
+const GENERATION_ROUTE_TYPE_BY_UI_TYPE: Record<MemorialType, string> = {
   telecomunicacoes: 'telecom',
   eletrico: 'eletrico',
   gas_natural: 'gas-natural',
-  gas_glp: 'glp',
+  gas_glp: 'glp/v2',
+};
+
+const LIST_FILTER_TYPE_BY_UI_TYPE: Record<MemorialType, ApiMemorialType> = {
+  telecomunicacoes: 'telecom',
+  eletrico: 'eletrico',
+  gas_natural: 'gas-natural',
+  gas_glp: 'glp_v2',
 };
 
 const UI_TYPE_BY_API_TYPE: Record<ApiMemorialType, MemorialType> = {
@@ -46,9 +58,14 @@ const UI_TYPE_BY_API_TYPE: Record<ApiMemorialType, MemorialType> = {
   eletrico: 'eletrico',
   'gas-natural': 'gas_natural',
   glp: 'gas_glp',
+  glp_v2: 'gas_glp',
 };
 
 function toMemorial(api: GeneratedMemorialApiResponse): Memorial {
+  const warnings = hasBatchMergeFallback(api.extraction_report)
+    ? [BATCH_MERGE_FALLBACK_WARNING]
+    : undefined;
+
   return {
     id: api.id,
     type: UI_TYPE_BY_API_TYPE[api.type],
@@ -57,6 +74,7 @@ function toMemorial(api: GeneratedMemorialApiResponse): Memorial {
     docxUrl: api.download_url,
     observations: api.observations ?? undefined,
     pdfFilenames: api.pdf_filenames,
+    warnings,
     status: toDashboardMemorialStatus(api.status),
   };
 }
@@ -66,7 +84,7 @@ export async function generateMemorial(
   files: File[],
   observations: string
 ): Promise<GenerateMemorialResponse> {
-  const apiType = API_TYPE_BY_UI_TYPE[type];
+  const apiType = GENERATION_ROUTE_TYPE_BY_UI_TYPE[type];
   const form = new FormData();
   files.forEach((file) => form.append('files', file));
   if (observations.trim()) {
@@ -89,7 +107,7 @@ export async function listMemorials(
 ): Promise<ListMemorialsResponse> {
   const { data } = await client.get<GeneratedMemorialListApiResponse>(
     '/api/v1/memoriais',
-    { params: type ? { type: API_TYPE_BY_UI_TYPE[type] } : undefined }
+    { params: type ? { type: LIST_FILTER_TYPE_BY_UI_TYPE[type] } : undefined }
   );
   return { memorials: data.memorials.map(toMemorial) };
 }

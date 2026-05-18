@@ -2,7 +2,9 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
 import {
+  BATCH_MERGE_FALLBACK_WARNING,
   canDownloadApiStatus,
+  hasBatchMergeFallback,
   normalizeApiError,
   toDashboardMemorialStatus,
 } from './src/services/apiContracts.ts';
@@ -93,5 +95,29 @@ test('normalizes unavailable download and missing artifact responses', () => {
       },
     }).message,
     'O arquivo do memorial não está mais disponível. Gere o memorial novamente.'
+  );
+});
+
+test('detects batch merge fallback and exposes a non-technical warning', () => {
+  assert.equal(
+    hasBatchMergeFallback({
+      cross_validation: {
+        batch_merge_fallback_used: true,
+        batch_merge_errors: [
+          {
+            batch_index: 0,
+            error_type: 'TimeoutError',
+            files: ['a.pdf', 'b.pdf'],
+          },
+        ],
+      },
+    }),
+    true
+  );
+
+  assert.equal(hasBatchMergeFallback({ cross_validation: {} }), false);
+  assert.equal(
+    BATCH_MERGE_FALLBACK_WARNING,
+    'O memorial foi gerado, mas uma etapa automática de conferência demorou mais do que o esperado. O sistema usou as informações extraídas diretamente das pranchas para continuar. Recomendamos revisar os campos principais antes de usar o documento final.'
   );
 });
