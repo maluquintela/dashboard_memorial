@@ -6,6 +6,8 @@ import {
   canDownloadApiStatus,
   hasBatchMergeFallback,
   normalizeApiError,
+  normalizeReviewItems,
+  resolveApiBaseUrl,
   toDashboardMemorialStatus,
 } from './src/services/apiContracts.ts';
 
@@ -98,6 +100,85 @@ test('normalizes unavailable download and missing artifact responses', () => {
   );
 });
 
+test('prioritizes OpenAI extraction errors over generic memorial validation messages', () => {
+  const rateLimitError = normalizeApiError({
+    response: {
+      status: 400,
+      data: {
+        detail: 'Payload invalido para o memorial eletrico v1.',
+        error: {
+          code: 'memorial_validation_error',
+          message: 'Payload invalido para o memorial eletrico v1.',
+          details: {
+            extraction_report: {
+              cross_validation: {
+                llm_errors: [
+                  {
+                    phase: 'file_extraction',
+                    error_type: 'RateLimitError',
+                    files: ['planta.pdf'],
+                  },
+                ],
+              },
+            },
+          },
+        },
+        extraction_report: {
+          cross_validation: {
+            llm_errors: [
+              {
+                phase: 'file_extraction',
+                error_type: 'RateLimitError',
+                files: ['planta.pdf'],
+              },
+            ],
+          },
+        },
+      },
+    },
+  });
+
+  assert.equal(rateLimitError.kind, 'server');
+  assert.equal(rateLimitError.code, 'openai_rate_limit');
+  assert.equal(
+    rateLimitError.message,
+    'A extração pela OpenAI falhou por limite ou cota da API. Verifique a chave, créditos e limites da conta OpenAI configurada no backend, ou tente novamente em instantes.'
+  );
+
+  const authError = normalizeApiError({
+    response: {
+      status: 400,
+      data: {
+        detail: 'Payload invalido para o memorial eletrico v1.',
+        error: {
+          code: 'memorial_validation_error',
+          message: 'Payload invalido para o memorial eletrico v1.',
+          details: {
+            extraction_report: {
+              cross_validation: {
+                llm_errors: [
+                  {
+                    phase: 'file_extraction',
+                    error_type: 'AuthenticationError',
+                    files: ['planta.pdf'],
+                  },
+                ],
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  assert.equal(authError.kind, 'server');
+  assert.equal(authError.code, 'openai_authentication');
+  assert.equal(
+    authError.message,
+    'A chave da OpenAI foi recusada. Verifique a variável OPENAI_API_KEY no backend e reinicie a API antes de gerar novamente.'
+  );
+});
+
 test('detects batch merge fallback and exposes a non-technical warning', () => {
   assert.equal(
     hasBatchMergeFallback({
@@ -120,4 +201,46 @@ test('detects batch merge fallback and exposes a non-technical warning', () => {
     BATCH_MERGE_FALLBACK_WARNING,
     'O memorial foi gerado, mas uma etapa automática de conferência demorou mais do que o esperado. O sistema usou as informações extraídas diretamente das pranchas para continuar. Recomendamos revisar os campos principais antes de usar o documento final.'
   );
+});
+
+test('keeps explicit localhost API URL in production-like local builds', () => {
+  assert.equal(
+    resolveApiBaseUrl({
+      isProd: true,
+      configuredApiUrl: 'http://localhost:8000',
+      localApiUrl: 'http://localhost:8000',
+      productionApiUrl: 'https://api-memorial-production.up.railway.app',
+    }),
+    'http://localhost:8000'
+  );
+});
+
+test('normalizes backend review items for editable frontend panels', () => {
+  const items = normalizeReviewItems([
+    {
+      id: 'default:mt.tensao_kv',
+      category: 'default',
+      field_path: 'mt.tensao_kv',
+      label: 'Mt > Tensao Kv',
+      current_value: 13.8,
+      confidence: 'low',
+      evidence: 'valor padrão MT-13.8kV',
+      rule: 'eletrico_mt_tensao_default',
+      reason: 'Valor preenchido por regra padrão.',
+      editable_type: 'number',
+    },
+    {
+      id: 'ignored',
+      category: 'unknown',
+      field_path: 'obra.nome',
+      label: 'Obra',
+      editable_type: 'text',
+    },
+  ]);
+
+  assert.equal(items.length, 1);
+  assert.equal(items[0].category, 'default');
+  assert.equal(items[0].fieldPath, 'mt.tensao_kv');
+  assert.equal(items[0].currentValue, 13.8);
+  assert.equal(items[0].editableType, 'number');
 });

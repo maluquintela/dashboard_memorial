@@ -1,4 +1,4 @@
-import type { Memorial } from '../types';
+import type { Memorial, MemorialReviewItem, ReviewEditableType, ReviewItemCategory } from '../types';
 
 type ApiErrorKind = 'network' | 'timeout' | 'validation' | 'download' | 'not_found' | 'server' | 'unknown';
 
@@ -18,11 +18,13 @@ interface BackendErrorEnvelope {
   code?: string;
   message?: string;
   request_id?: string;
+  details?: unknown;
 }
 
 interface BackendErrorBody {
   detail?: unknown;
   error?: BackendErrorEnvelope;
+  extraction_report?: unknown;
 }
 
 export class NormalizedApiError extends Error {
@@ -56,6 +58,22 @@ export class NormalizedApiError extends Error {
 export const BATCH_MERGE_FALLBACK_WARNING =
   'O memorial foi gerado, mas uma etapa automática de conferência demorou mais do que o esperado. O sistema usou as informações extraídas diretamente das pranchas para continuar. Recomendamos revisar os campos principais antes de usar o documento final.';
 
+export function resolveApiBaseUrl({
+  isProd,
+  configuredApiUrl,
+  localApiUrl,
+  productionApiUrl,
+}: {
+  isProd: boolean;
+  configuredApiUrl?: string;
+  localApiUrl: string;
+  productionApiUrl: string;
+}): string {
+  const explicitUrl = configuredApiUrl?.trim();
+  if (explicitUrl) return explicitUrl;
+  return isProd ? productionApiUrl : localApiUrl;
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
@@ -72,12 +90,14 @@ function toBackendErrorBody(data: unknown): BackendErrorBody {
         code: typeof data.error.code === 'string' ? data.error.code : undefined,
         message: typeof data.error.message === 'string' ? data.error.message : undefined,
         request_id: typeof data.error.request_id === 'string' ? data.error.request_id : undefined,
+        details: data.error.details,
       }
     : undefined;
 
   return {
     detail: data.detail,
     error,
+    extraction_report: data.extraction_report,
   };
 }
 
@@ -122,6 +142,68 @@ function normalizeUploadValidation(detail: string, status?: number): string | nu
   return null;
 }
 
+function collectLlmErrorTypes(value: unknown): string[] {
+  if (!isRecord(value)) return [];
+
+  const errors = value.llm_errors;
+  if (Array.isArray(errors)) {
+    return errors
+      .map((item) => isRecord(item) && typeof item.error_type === 'string' ? item.error_type : '')
+      .filter(Boolean);
+  }
+
+  const nestedTypes: string[] = [];
+  for (const nested of Object.values(value)) {
+    nestedTypes.push(...collectLlmErrorTypes(nested));
+  }
+  return nestedTypes;
+}
+
+function findOpenAiErrorType(body: BackendErrorBody): string | null {
+  const candidates = [
+    body.extraction_report,
+    isRecord(body.error?.details) ? body.error.details.extraction_report : undefined,
+    body.error?.details,
+  ];
+
+  for (const candidate of candidates) {
+    const errorTypes = collectLlmErrorTypes(candidate);
+    const openAiErrorType = errorTypes.find((type) => /authentication|ratelimit|permission|openai/i.test(type));
+    if (openAiErrorType) return openAiErrorType;
+  }
+  return null;
+}
+
+function normalizeOpenAiError(errorType: string, status?: number): NormalizedApiError {
+  if (/authentication/i.test(errorType)) {
+    return new NormalizedApiError({
+      kind: 'server',
+      status,
+      code: 'openai_authentication',
+      message: 'A chave da OpenAI foi recusada. Verifique a variável OPENAI_API_KEY no backend e reinicie a API antes de gerar novamente.',
+      retryable: true,
+    });
+  }
+
+  if (/ratelimit/i.test(errorType)) {
+    return new NormalizedApiError({
+      kind: 'server',
+      status,
+      code: 'openai_rate_limit',
+      message: 'A extração pela OpenAI falhou por limite ou cota da API. Verifique a chave, créditos e limites da conta OpenAI configurada no backend, ou tente novamente em instantes.',
+      retryable: true,
+    });
+  }
+
+  return new NormalizedApiError({
+    kind: 'server',
+    status,
+    code: 'openai_extraction_error',
+    message: 'A extração pela OpenAI falhou. Verifique a configuração da OpenAI no backend e tente gerar novamente.',
+    retryable: true,
+  });
+}
+
 export function normalizeApiError(error: unknown): NormalizedApiError {
   if (error instanceof NormalizedApiError) return error;
 
@@ -132,6 +214,11 @@ export function normalizeApiError(error: unknown): NormalizedApiError {
   const detail = detailToString(body.detail);
   const backendMessage = body.error?.message;
   const candidateMessage = backendMessage || detail || source.message || '';
+
+  const openAiErrorType = findOpenAiErrorType(body);
+  if (openAiErrorType) {
+    return normalizeOpenAiError(openAiErrorType, status);
+  }
 
   if (source.code === 'ECONNABORTED') {
     return new NormalizedApiError({
@@ -243,4 +330,52 @@ export function hasBatchMergeFallback(extractionReport: unknown): boolean {
     isRecord(crossValidation) &&
     crossValidation.batch_merge_fallback_used === true
   );
+}
+
+const REVIEW_ITEM_CATEGORIES = new Set<ReviewItemCategory>([
+  'missing',
+  'default',
+  'low_confidence',
+  'conflict',
+]);
+
+const REVIEW_EDITABLE_TYPES = new Set<ReviewEditableType>([
+  'text',
+  'number',
+  'boolean',
+  'json',
+]);
+
+export function normalizeReviewItems(reviewItems: unknown): MemorialReviewItem[] {
+  if (!Array.isArray(reviewItems)) return [];
+
+  return reviewItems.flatMap((item): MemorialReviewItem[] => {
+    if (!isRecord(item)) return [];
+
+    const category = typeof item.category === 'string' && REVIEW_ITEM_CATEGORIES.has(item.category as ReviewItemCategory)
+      ? item.category as ReviewItemCategory
+      : null;
+    const editableType = typeof item.editable_type === 'string' && REVIEW_EDITABLE_TYPES.has(item.editable_type as ReviewEditableType)
+      ? item.editable_type as ReviewEditableType
+      : 'text';
+    const fieldPath = typeof item.field_path === 'string' ? item.field_path : '';
+    const label = typeof item.label === 'string' && item.label.trim()
+      ? item.label
+      : fieldPath;
+
+    if (!category || !fieldPath) return [];
+
+    return [{
+      id: typeof item.id === 'string' ? item.id : `${category}:${fieldPath}`,
+      category,
+      fieldPath,
+      label,
+      currentValue: item.current_value,
+      confidence: typeof item.confidence === 'string' ? item.confidence : null,
+      evidence: typeof item.evidence === 'string' ? item.evidence : null,
+      rule: typeof item.rule === 'string' ? item.rule : null,
+      reason: typeof item.reason === 'string' ? item.reason : null,
+      editableType,
+    }];
+  });
 }

@@ -3,12 +3,15 @@ import type { Memorial } from '../types';
 import { MEMORIAL_TYPE_LABELS } from '../types';
 import { TP, tpCardStyle } from '../theme';
 import DocxPreview from './DocxPreview';
+import ReviewFieldsPanel from './ReviewFieldsPanel';
 import { formatDateTime, formatLongDateTime } from '../utils/date';
 
 interface ProjectDetailProps {
   memorial: Memorial | null;
   onDownload: (memorial: Memorial) => void;
   onDelete: (memorial: Memorial) => void;
+  onCorrect: (memorial: Memorial, corrections: Record<string, unknown>) => Promise<void>;
+  isCorrecting: boolean;
 }
 
 const statusMeta: Record<Memorial['status'], {
@@ -41,7 +44,13 @@ const statusMeta: Record<Memorial['status'], {
   },
 };
 
-export default function ProjectDetail({ memorial, onDownload, onDelete }: ProjectDetailProps) {
+export default function ProjectDetail({
+  memorial,
+  onDownload,
+  onDelete,
+  onCorrect,
+  isCorrecting,
+}: ProjectDetailProps) {
   if (!memorial) {
     return (
       <div
@@ -149,6 +158,15 @@ export default function ProjectDetail({ memorial, onDownload, onDelete }: Projec
               </div>
             </div>
           </section>
+        )}
+
+        {memorial.status === 'ready' && (
+          <ReviewFieldsPanel
+            key={`${memorial.id}:${(memorial.reviewItems ?? []).map((item) => item.id).join('|')}`}
+            memorial={memorial}
+            isSaving={isCorrecting}
+            onSave={onCorrect}
+          />
         )}
 
         <section>
