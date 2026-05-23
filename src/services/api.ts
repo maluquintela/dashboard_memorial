@@ -14,6 +14,8 @@ import {
   BATCH_MERGE_FALLBACK_WARNING,
   hasBatchMergeFallback,
   normalizeApiError,
+  normalizeReviewItems,
+  resolveApiBaseUrl,
   toDashboardMemorialStatus,
 } from './apiContracts';
 
@@ -21,11 +23,12 @@ const LOCAL_API_URL = 'http://localhost:8000';
 const PRODUCTION_API_URL = 'https://api-memorial-production.up.railway.app';
 const configuredApiUrl = import.meta.env.VITE_API_URL;
 
-const BASE_URL = import.meta.env.PROD
-  ? configuredApiUrl?.includes('localhost')
-    ? PRODUCTION_API_URL
-    : configuredApiUrl || PRODUCTION_API_URL
-  : configuredApiUrl || LOCAL_API_URL;
+const BASE_URL = resolveApiBaseUrl({
+  isProd: import.meta.env.PROD,
+  configuredApiUrl,
+  localApiUrl: LOCAL_API_URL,
+  productionApiUrl: PRODUCTION_API_URL,
+});
 
 const client = axios.create({
   baseURL: BASE_URL,
@@ -75,6 +78,9 @@ function toMemorial(api: GeneratedMemorialApiResponse): Memorial {
     observations: api.observations ?? undefined,
     pdfFilenames: api.pdf_filenames,
     warnings,
+    finalContext: api.final_context ?? undefined,
+    extractionReport: api.extraction_report,
+    reviewItems: normalizeReviewItems(api.review_items),
     status: toDashboardMemorialStatus(api.status),
   };
 }
@@ -98,8 +104,15 @@ export async function generateMemorial(
   return { memorial: toMemorial(data) };
 }
 
-export async function correctMemorial(): Promise<CorrectMemorialResponse> {
-  throw new Error('Correção por sessão ainda não está habilitada neste dashboard.');
+export async function correctMemorial(
+  memorialId: string,
+  corrections: Record<string, unknown>
+): Promise<CorrectMemorialResponse> {
+  const { data } = await client.post<GeneratedMemorialApiResponse>(
+    `/api/v1/memoriais/${memorialId}/correcoes`,
+    { corrections }
+  );
+  return { memorial: toMemorial(data) };
 }
 
 export async function listMemorials(
@@ -112,9 +125,13 @@ export async function listMemorials(
   return { memorials: data.memorials.map(toMemorial) };
 }
 
-export async function getMemorial(id: string): Promise<Memorial> {
+export async function getMemorial(
+  id: string,
+  options?: { includeContext?: boolean }
+): Promise<Memorial> {
   const { data } = await client.get<GeneratedMemorialApiResponse>(
-    `/api/v1/memoriais/${id}`
+    `/api/v1/memoriais/${id}`,
+    { params: options?.includeContext ? { include_context: true } : undefined }
   );
   return toMemorial(data);
 }

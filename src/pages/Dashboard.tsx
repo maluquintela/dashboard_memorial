@@ -6,7 +6,14 @@ import UploadPanel from '../components/UploadPanel';
 import GeneratedList from '../components/GeneratedList';
 import ProjectDetail from '../components/ProjectDetail';
 import type { Memorial, MemorialType } from '../types';
-import { deleteMemorial, generateMemorial, listMemorials, refreshMemorialDownloadUrl } from '../services/api';
+import {
+  correctMemorial,
+  deleteMemorial,
+  generateMemorial,
+  getMemorial,
+  listMemorials,
+  refreshMemorialDownloadUrl,
+} from '../services/api';
 import { normalizeApiError } from '../services/apiContracts';
 import { TP, tpCardStyle } from '../theme';
 
@@ -23,6 +30,7 @@ export default function Dashboard() {
   const [activeView, setActiveView] = useState<SidebarView>('telecomunicacoes');
   const [memorials, setMemorials] = useState<Memorial[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isCorrecting, setIsCorrecting] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [historyError, setHistoryError] = useState<string | null>(null);
   const [generationError, setGenerationError] = useState<string | null>(null);
@@ -61,6 +69,22 @@ export default function Dashboard() {
   const handleHistoryCategoryChange = (type: MemorialType) => {
     setHistoryCategory(type);
     setSelectedMemorial((current) => current?.type === type ? current : null);
+  };
+
+  const handleSelectMemorial = async (memorial: Memorial) => {
+    setSelectedMemorial(memorial);
+    setHistoryCategory(memorial.type);
+    setGenerationError(null);
+    try {
+      const detailed = await getMemorial(memorial.id, { includeContext: true });
+      setMemorials((prev) => prev.map((item) => item.id === detailed.id ? detailed : item));
+      setSelectedMemorial((current) => current?.id === detailed.id ? detailed : current);
+    } catch (error) {
+      setGenerationError(getFriendlyErrorMessage(
+        error,
+        'Não foi possível carregar os detalhes completos do memorial.'
+      ));
+    }
   };
 
   const handleGenerate = async (requestedType: MemorialType, files: File[], observations: string) => {
@@ -139,6 +163,31 @@ export default function Dashboard() {
     }
   };
 
+  const handleCorrect = async (
+    memorial: Memorial,
+    corrections: Record<string, unknown>
+  ) => {
+    setIsCorrecting(true);
+    setGenerationError(null);
+    try {
+      const res = await correctMemorial(memorial.id, corrections);
+      setMemorials((prev) => [
+        res.memorial,
+        ...prev.filter((item) => item.id !== res.memorial.id),
+      ]);
+      setSelectedMemorial(res.memorial);
+      setHistoryCategory(res.memorial.type);
+    } catch (error) {
+      setGenerationError(getFriendlyErrorMessage(
+        error,
+        'Não foi possível salvar as correções. Revise os valores e tente novamente.'
+      ));
+      throw error;
+    } finally {
+      setIsCorrecting(false);
+    }
+  };
+
   const isGeneratorView = activeView !== 'gerados';
   const visibleSelectedMemorial = selectedMemorial?.type === historyCategory ? selectedMemorial : null;
 
@@ -205,9 +254,8 @@ export default function Dashboard() {
                   onCategoryChange={() => {}}
                   selectedId={visibleSelectedMemorial?.id ?? null}
                   onSelect={(m) => {
-                    setSelectedMemorial(m);
                     handleViewChange('gerados');
-                    setHistoryCategory(m.type);
+                    handleSelectMemorial(m);
                   }}
                   onDownload={handleDownload}
                   onDelete={handleDelete}
@@ -247,7 +295,7 @@ export default function Dashboard() {
                     activeCategory={historyCategory}
                     onCategoryChange={handleHistoryCategoryChange}
                     selectedId={visibleSelectedMemorial?.id ?? null}
-                    onSelect={setSelectedMemorial}
+                    onSelect={handleSelectMemorial}
                     onDownload={handleDownload}
                     onDelete={handleDelete}
                     isLoading={isLoadingHistory}
@@ -261,6 +309,8 @@ export default function Dashboard() {
                     memorial={visibleSelectedMemorial}
                     onDownload={handleDownload}
                     onDelete={handleDelete}
+                    onCorrect={handleCorrect}
+                    isCorrecting={isCorrecting}
                   />
                 </div>
               </div>

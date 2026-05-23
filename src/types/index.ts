@@ -11,7 +11,26 @@ export interface Memorial {
   observations?: string;
   pdfFilenames?: string[];
   warnings?: string[];
+  finalContext?: Record<string, unknown>;
+  extractionReport?: unknown;
+  reviewItems?: MemorialReviewItem[];
   status: 'generating' | 'ready' | 'error';
+}
+
+export type ReviewItemCategory = 'missing' | 'default' | 'low_confidence' | 'conflict';
+export type ReviewEditableType = 'text' | 'number' | 'boolean' | 'json';
+
+export interface MemorialReviewItem {
+  id: string;
+  category: ReviewItemCategory;
+  fieldPath: string;
+  label: string;
+  currentValue?: unknown;
+  confidence?: string | null;
+  evidence?: string | null;
+  rule?: string | null;
+  reason?: string | null;
+  editableType: ReviewEditableType;
 }
 
 export interface GenerateMemorialPayload {
@@ -22,7 +41,7 @@ export interface GenerateMemorialPayload {
 
 export interface CorrectMemorialPayload {
   memorialId: string;
-  feedback: string;
+  corrections: Record<string, unknown>;
 }
 
 export interface CorrectMemorialResponse {
@@ -47,7 +66,9 @@ export interface GeneratedMemorialApiResponse {
   created_at: string;
   updated_at: string;
   download_url: string;
+  final_context?: Record<string, unknown> | null;
   extraction_report?: unknown;
+  review_items?: unknown;
 }
 
 export interface GeneratedMemorialListApiResponse {
