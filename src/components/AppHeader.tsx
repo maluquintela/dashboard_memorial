@@ -1,15 +1,22 @@
 import { useEffect, useState } from 'react';
 import TecPredLogo from './TecPredLogo';
 import { TP } from '../theme';
+import type { UserProfile } from '../types';
 
 interface AppHeaderProps {
   title?: string;
   subtitle?: string;
+  profile?: UserProfile | null;
+  onProfile?: () => void;
+  onLogout?: () => void;
 }
 
 export default function AppHeader({
   title = 'Dashboard Memorial',
   subtitle = 'Visão em tempo real',
+  profile = null,
+  onProfile,
+  onLogout,
 }: AppHeaderProps) {
   const [now, setNow] = useState(() => new Date());
 
@@ -82,19 +89,32 @@ export default function AppHeader({
             </span>
           </p>
         </div>
-        <div
-          className="flex items-center gap-2 rounded-lg border px-3 py-1.5"
-          style={{
-            borderColor: 'rgba(52, 211, 153, 0.5)',
-            background: 'rgba(16, 185, 129, 0.12)',
-          }}
-        >
-          <span className="relative flex h-2 w-2">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
-          </span>
-          <span className="text-xs font-semibold text-emerald-100">Conectado</span>
-        </div>
+        {profile && (
+          <button
+            type="button"
+            onClick={onProfile}
+            className="hidden max-w-40 truncate rounded-lg border px-3 py-1.5 text-left text-xs font-semibold text-white sm:block"
+            style={{
+              borderColor: 'rgba(255,255,255,0.2)',
+              background: 'rgba(255,255,255,0.1)',
+            }}
+          >
+            {profile.displayName}
+          </button>
+        )}
+        {onLogout && (
+          <button
+            type="button"
+            onClick={onLogout}
+            className="rounded-lg border px-3 py-1.5 text-xs font-semibold text-white"
+            style={{
+              borderColor: 'rgba(255,255,255,0.25)',
+              background: 'rgba(255,255,255,0.08)',
+            }}
+          >
+            Sair
+          </button>
+        )}
       </div>
     </header>
   );

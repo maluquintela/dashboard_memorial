@@ -9,6 +9,11 @@ import type {
   GeneratedMemorialApiResponse,
   GeneratedMemorialListApiResponse,
   GeneratedMemorialDownloadApiResponse,
+  UserProfile,
+  UserProfileApiResponse,
+  AdminUserListApiResponse,
+  CreateUserPayload,
+  UpdateUserPayload,
 } from '../types';
 import {
   BATCH_MERGE_FALLBACK_WARNING,
@@ -33,6 +38,20 @@ const BASE_URL = resolveApiBaseUrl({
 const client = axios.create({
   baseURL: BASE_URL,
   timeout: 600_000,
+});
+
+let accessTokenProvider: (() => Promise<string | null>) | null = null;
+
+export function setAccessTokenProvider(provider: (() => Promise<string | null>) | null): void {
+  accessTokenProvider = provider;
+}
+
+client.interceptors.request.use(async (config) => {
+  const token = accessTokenProvider ? await accessTokenProvider() : null;
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
 });
 
 client.interceptors.response.use(
@@ -81,8 +100,67 @@ function toMemorial(api: GeneratedMemorialApiResponse): Memorial {
     finalContext: api.final_context ?? undefined,
     extractionReport: api.extraction_report,
     reviewItems: normalizeReviewItems(api.review_items),
+    createdBy: api.created_by
+      ? {
+          userId: api.created_by.user_id,
+          displayName: api.created_by.display_name,
+        }
+      : undefined,
     status: toDashboardMemorialStatus(api.status),
   };
+}
+
+function toUserProfile(api: UserProfileApiResponse): UserProfile {
+  return {
+    userId: api.user_id,
+    email: api.email,
+    displayName: api.display_name,
+    role: api.role,
+    status: api.status,
+    createdAt: api.created_at,
+    updatedAt: api.updated_at,
+  };
+}
+
+export async function getMe(): Promise<UserProfile> {
+  const { data } = await client.get<UserProfileApiResponse>('/api/v1/me');
+  return toUserProfile(data);
+}
+
+export async function updateMyProfile(displayName: string): Promise<UserProfile> {
+  const { data } = await client.patch<UserProfileApiResponse>('/api/v1/me', {
+    display_name: displayName,
+  });
+  return toUserProfile(data);
+}
+
+export async function listUsers(): Promise<UserProfile[]> {
+  const { data } = await client.get<AdminUserListApiResponse>('/api/v1/admin/users');
+  return data.users.map(toUserProfile);
+}
+
+export async function createUser(payload: CreateUserPayload): Promise<UserProfile> {
+  const { data } = await client.post<UserProfileApiResponse>('/api/v1/admin/users', {
+    email: payload.email,
+    password: payload.password,
+    display_name: payload.displayName,
+    role: payload.role,
+  });
+  return toUserProfile(data);
+}
+
+export async function updateUser(userId: string, payload: UpdateUserPayload): Promise<UserProfile> {
+  const { data } = await client.patch<UserProfileApiResponse>(`/api/v1/admin/users/${userId}`, {
+    display_name: payload.displayName,
+    role: payload.role,
+    status: payload.status,
+  });
+  return toUserProfile(data);
+}
+
+export async function deleteUser(userId: string): Promise<UserProfile> {
+  const { data } = await client.delete<UserProfileApiResponse>(`/api/v1/admin/users/${userId}`);
+  return toUserProfile(data);
 }
 
 export async function generateMemorial(

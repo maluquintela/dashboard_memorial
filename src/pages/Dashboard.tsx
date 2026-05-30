@@ -2,10 +2,13 @@ import { useState, useEffect, useCallback } from 'react';
 import AppHeader from '../components/AppHeader';
 import DashboardStats from '../components/DashboardStats';
 import Sidebar from '../components/Sidebar';
+import type { SidebarView } from '../components/Sidebar';
 import UploadPanel from '../components/UploadPanel';
 import GeneratedList from '../components/GeneratedList';
 import ProjectDetail from '../components/ProjectDetail';
-import type { Memorial, MemorialType } from '../types';
+import AdminUsers from './AdminUsers';
+import MyProfile from './MyProfile';
+import type { Memorial, MemorialType, UserProfile } from '../types';
 import {
   correctMemorial,
   deleteMemorial,
@@ -17,8 +20,6 @@ import {
 import { normalizeApiError } from '../services/apiContracts';
 import { TP, tpCardStyle } from '../theme';
 
-type SidebarView = MemorialType | 'gerados';
-
 const MEMORIAL_TYPES: MemorialType[] = ['telecomunicacoes', 'eletrico', 'gas_natural', 'gas_glp'];
 
 function getFriendlyErrorMessage(error: unknown, fallback: string) {
@@ -26,7 +27,13 @@ function getFriendlyErrorMessage(error: unknown, fallback: string) {
   return normalized.message || fallback;
 }
 
-export default function Dashboard() {
+interface DashboardProps {
+  profile: UserProfile;
+  isOwner: boolean;
+  onLogout: () => void;
+}
+
+export default function Dashboard({ profile, isOwner, onLogout }: DashboardProps) {
   const [activeView, setActiveView] = useState<SidebarView>('telecomunicacoes');
   const [memorials, setMemorials] = useState<Memorial[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -188,7 +195,7 @@ export default function Dashboard() {
     }
   };
 
-  const isGeneratorView = activeView !== 'gerados';
+  const isGeneratorView = MEMORIAL_TYPES.includes(activeView as MemorialType);
   const visibleSelectedMemorial = selectedMemorial?.type === historyCategory ? selectedMemorial : null;
 
   return (
@@ -196,16 +203,24 @@ export default function Dashboard() {
       className="flex h-screen flex-col overflow-hidden"
       style={{ backgroundColor: TP.page }}
     >
-      <AppHeader />
+      <AppHeader
+        profile={profile}
+        onProfile={() => setActiveView('perfil')}
+        onLogout={onLogout}
+      />
 
       <div className="flex min-h-0 flex-1 flex-col md:flex-row">
-        <Sidebar active={activeView} onChange={handleViewChange} />
+        <Sidebar active={activeView} onChange={handleViewChange} isOwner={isOwner} />
 
         <main
           className="flex min-h-0 flex-1 flex-col overflow-hidden"
           style={{ backgroundColor: TP.page }}
         >
-          {isGeneratorView ? (
+          {activeView === 'admin' && isOwner ? (
+            <AdminUsers currentUser={profile} />
+          ) : activeView === 'perfil' ? (
+            <MyProfile />
+          ) : isGeneratorView ? (
             <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-5 pb-5 pt-4 lg:px-8">
               <div>
                 <h2

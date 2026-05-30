@@ -118,6 +118,8 @@ Variável no Vercel:
 
 ```env
 VITE_API_URL=https://<railway-api-domain>
+VITE_SUPABASE_URL=https://<projeto>.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=<publishable-key>
 ```
 
 Variáveis relevantes na API Railway:
@@ -125,11 +127,18 @@ Variáveis relevantes na API Railway:
 ```env
 CORS_ORIGINS=https://<vercel-dashboard-domain>
 SUPABASE_URL=...
-SUPABASE_KEY=...
+SUPABASE_SECRET_KEY=...
 OPENAI_API_KEY=...
 USE_LLM_EXTRACTION=true
 GENERATED_MEMORIALS_BUCKET=generated-memorials
 GENERATED_MEMORIALS_SIGNED_URL_TTL=3600
 ```
 
-No Supabase, confirme que a migration `migrations/002_generated_memorials.sql` da API foi executada e que o bucket privado `generated-memorials` existe.
+No Supabase:
+
+- habilite login por email/senha;
+- desabilite cadastro público;
+- execute as migrations da API até `migrations/005_auth_profiles_and_ownership.sql`;
+- confirme que o bucket privado `generated-memorials` existe;
+- mantenha service role/secret key apenas no backend;
+- use no frontend somente a publishable key.

@@ -196,6 +196,9 @@ export default function GeneratedList({
                       <p className="mt-0.5 text-xs" style={{ color: TP.muted }}>
                         {formatDateTime(memorial.createdAt)}
                       </p>
+                      <p className="mt-0.5 truncate text-[11px]" style={{ color: TP.muted }}>
+                        Criado por {memorial.createdBy?.displayName ?? 'Criador não informado'}
+                      </p>
                     </div>
                     <div className="flex shrink-0 items-center gap-2">
                       <span

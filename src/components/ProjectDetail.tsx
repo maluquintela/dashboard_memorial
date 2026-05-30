@@ -233,6 +233,14 @@ export default function ProjectDetail({
               </div>
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: TP.muted }}>
+                  Criado por
+                </p>
+                <p className="font-medium" style={{ color: TP.text }}>
+                  {memorial.createdBy?.displayName ?? 'Criador não informado'}
+                </p>
+              </div>
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: TP.muted }}>
                   Status
                 </p>
                 <p className="font-medium" style={{ color: TP.text }}>
