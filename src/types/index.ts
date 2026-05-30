@@ -14,7 +14,39 @@ export interface Memorial {
   finalContext?: Record<string, unknown>;
   extractionReport?: unknown;
   reviewItems?: MemorialReviewItem[];
+  createdBy?: MemorialCreator;
   status: 'generating' | 'ready' | 'error';
+}
+
+export interface MemorialCreator {
+  userId: string;
+  displayName: string;
+}
+
+export type UserRole = 'owner' | 'user';
+export type UserStatus = 'active' | 'inactive';
+
+export interface UserProfile {
+  userId: string;
+  email: string;
+  displayName: string;
+  role: UserRole;
+  status: UserStatus;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+}
+
+export interface CreateUserPayload {
+  email: string;
+  password: string;
+  displayName: string;
+  role: UserRole;
+}
+
+export interface UpdateUserPayload {
+  displayName?: string;
+  role?: UserRole;
+  status?: UserStatus;
 }
 
 export type ReviewItemCategory = 'missing' | 'default' | 'low_confidence' | 'conflict';
@@ -69,6 +101,10 @@ export interface GeneratedMemorialApiResponse {
   final_context?: Record<string, unknown> | null;
   extraction_report?: unknown;
   review_items?: unknown;
+  created_by?: {
+    user_id: string;
+    display_name: string;
+  } | null;
 }
 
 export interface GeneratedMemorialListApiResponse {
@@ -77,6 +113,20 @@ export interface GeneratedMemorialListApiResponse {
 
 export interface GeneratedMemorialDownloadApiResponse {
   download_url: string;
+}
+
+export interface UserProfileApiResponse {
+  user_id: string;
+  email: string;
+  display_name: string;
+  role: UserRole;
+  status: UserStatus;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
+export interface AdminUserListApiResponse {
+  users: UserProfileApiResponse[];
 }
 
 export interface ApiDetailError {

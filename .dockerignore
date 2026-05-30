@@ -1,0 +1,12 @@
+.DS_Store
+.codex
+.env
+.env.local
+.env.production
+.git
+.gitignore
+dist
+node_modules
+playwright-report
+test-results
+*.log

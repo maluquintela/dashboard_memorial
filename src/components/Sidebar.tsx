@@ -1,13 +1,14 @@
-import { Radio, Zap, Flame, Wind, FolderOpen } from 'lucide-react';
+import { Radio, Zap, Flame, Wind, FolderOpen, ShieldCheck } from 'lucide-react';
 import type { MemorialType } from '../types';
 import TecPredLogo from './TecPredLogo';
 import { TP } from '../theme';
 
-type SidebarView = MemorialType | 'gerados';
+export type SidebarView = MemorialType | 'gerados' | 'admin' | 'perfil';
 
 interface SidebarProps {
   active: SidebarView;
   onChange: (view: SidebarView) => void;
+  isOwner?: boolean;
 }
 
 interface NavItem {
@@ -23,7 +24,7 @@ const items: NavItem[] = [
   { id: 'gas_glp', label: 'Gas GLP', icon: <Wind size={18} /> },
 ];
 
-export default function Sidebar({ active, onChange }: SidebarProps) {
+export default function Sidebar({ active, onChange, isOwner = false }: SidebarProps) {
   const linkBase =
     'flex w-full min-w-0 items-center gap-2 rounded-r-lg border-l-4 px-3 py-2.5 text-left text-sm font-medium transition-all md:gap-3';
 
@@ -97,6 +98,32 @@ export default function Sidebar({ active, onChange }: SidebarProps) {
             <span className="truncate">Memoriais gerados</span>
           </button>
         </div>
+
+        {isOwner && (
+          <div className="col-span-2 sm:col-span-1 md:pt-4">
+            <p
+              className="hidden px-2 text-[10px] font-semibold uppercase tracking-widest md:mb-2 md:block"
+              style={{ color: TP.muted }}
+            >
+              Acesso
+            </p>
+            <button
+              type="button"
+              onClick={() => onChange('admin')}
+              className={linkBase}
+              style={{
+                borderLeftColor: active === 'admin' ? TP.accent : 'transparent',
+                background: active === 'admin' ? TP.navActiveBg : 'transparent',
+                color: active === 'admin' ? TP.primary : TP.text,
+              }}
+            >
+              <span className="shrink-0" style={{ color: active === 'admin' ? TP.accent : TP.muted }}>
+                <ShieldCheck size={18} />
+              </span>
+              <span className="truncate">Administração</span>
+            </button>
+          </div>
+        )}
       </nav>
 
       <div className="hidden border-t p-4 md:block" style={{ borderColor: TP.border }}>
