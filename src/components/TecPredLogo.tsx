@@ -28,11 +28,9 @@ export default function TecPredLogo({
       >
         <path
           fill={color}
-          d="M15 0h34c13.3 0 24 10.7 24 24v24c0 7.7-3.7 14.9-9.9 19.4L45.8 80H14C6.3 80 0 73.7 0 66V14C0 6.3 6.3 0 14 0h1Zm22 16v48h7.1l12.9-9.3V25c0-5-4-9-9-9H37Z"
-        />
-        <path
-          fill={color}
-          d="M10 64h63v2c0 7.7-6.3 14-14 14H10V64Z"
+          fillRule="evenodd"
+          clipRule="evenodd"
+          d="M13 0h35c10.7 0 19 8.2 19 18.8v23.5c0 7.5-3.6 14.6-9.7 18.9L42 72h27v8H13C5.8 80 0 74.2 0 67V13C0 5.8 5.8 0 13 0Zm16 16v48h5.6l17.9-12.8A9.5 9.5 0 0 0 56.5 43V24.8c0-4.9-3.9-8.8-8.8-8.8H29Z"
         />
         <text
           x="91"
