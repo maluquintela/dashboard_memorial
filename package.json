@@ -11,7 +11,7 @@
     "typecheck": "tsc -b",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "test": "node --test apiContracts.test.ts",
+    "test": "node --test apiContracts.test.ts adminUsersState.test.ts",
     "e2e": "playwright test",
     "e2e:ui": "playwright test --ui",
     "preview": "vite preview"

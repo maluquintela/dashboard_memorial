@@ -4,6 +4,7 @@ import { ShieldCheck, UserPlus, Trash2, RefreshCw } from 'lucide-react';
 import { createUser, deleteUser, listUsers, updateUser } from '../services/api';
 import type { UserProfile, UserRole } from '../types';
 import { TP, tpCardStyle } from '../theme';
+import { removeUserFromPanel } from './adminUsersState';
 
 interface AdminUsersProps {
   currentUser: UserProfile;
@@ -69,15 +70,27 @@ export default function AdminUsers({ currentUser }: AdminUsersProps) {
     }
   }
 
-  async function handleDelete(user: UserProfile) {
+  async function handleDeactivate(user: UserProfile) {
     const confirmed = window.confirm(`Desativar "${user.displayName}"?`);
     if (!confirmed) return;
     setError(null);
     try {
-      const updated = await deleteUser(user.userId);
+      const updated = await updateUser(user.userId, { status: 'inactive' });
       setUsers((prev) => prev.map((item) => item.userId === updated.userId ? updated : item));
     } catch {
       setError('Não foi possível desativar o usuário.');
+    }
+  }
+
+  async function handleRemoveFromPanel(user: UserProfile) {
+    const confirmed = window.confirm(`Remover "${user.displayName}" do painel?`);
+    if (!confirmed) return;
+    setError(null);
+    try {
+      await deleteUser(user.userId);
+      setUsers((prev) => removeUserFromPanel(prev, user.userId));
+    } catch {
+      setError('Não foi possível remover o usuário do painel.');
     }
   }
 
@@ -174,7 +187,7 @@ export default function AdminUsers({ currentUser }: AdminUsersProps) {
                     <td className="px-4 py-3">{user.role === 'owner' ? 'Owner' : 'Usuário'}</td>
                     <td className="px-4 py-3">{user.status === 'active' ? 'Ativo' : 'Inativo'}</td>
                     <td className="px-4 py-3">
-                      <div className="flex justify-end gap-2">
+                      <div className="flex flex-wrap justify-end gap-2">
                         <button
                           type="button"
                           onClick={() => handleToggleRole(user)}
@@ -186,13 +199,23 @@ export default function AdminUsers({ currentUser }: AdminUsersProps) {
                         </button>
                         <button
                           type="button"
-                          onClick={() => handleDelete(user)}
+                          onClick={() => handleDeactivate(user)}
                           disabled={isSelf || user.status === 'inactive'}
                           className="flex items-center gap-1 rounded-lg border px-3 py-1.5 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-40"
                           style={{ borderColor: 'rgba(248, 113, 113, 0.45)', color: '#dc2626' }}
                         >
                           <Trash2 size={12} />
                           Desativar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveFromPanel(user)}
+                          disabled={isSelf}
+                          className="flex items-center gap-1 rounded-lg border px-3 py-1.5 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-40"
+                          style={{ borderColor: 'rgba(107, 114, 128, 0.35)', color: TP.muted }}
+                        >
+                          <Trash2 size={12} />
+                          Remover
                         </button>
                       </div>
                     </td>
