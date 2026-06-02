@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { ShieldCheck, UserPlus, Trash2, RefreshCw } from 'lucide-react';
 import { createUser, deleteUser, listUsers, updateUser } from '../services/api';
 import type { UserProfile, UserRole } from '../types';
 import { TP, tpCardStyle } from '../theme';
-import { removeUserFromPanel } from './adminUsersState';
+import { hideRemovedUsers, removeUserFromPanel } from './adminUsersState';
 
 interface AdminUsersProps {
   currentUser: UserProfile;
@@ -12,6 +12,7 @@ interface AdminUsersProps {
 
 export default function AdminUsers({ currentUser }: AdminUsersProps) {
   const [users, setUsers] = useState<UserProfile[]>([]);
+  const [removedUserIds, setRemovedUserIds] = useState<Set<string>>(() => new Set());
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -20,21 +21,21 @@ export default function AdminUsers({ currentUser }: AdminUsersProps) {
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<UserRole>('user');
 
-  async function fetchUsers() {
+  const fetchUsers = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      setUsers(await listUsers());
+      setUsers(hideRemovedUsers(await listUsers(), removedUserIds));
     } catch {
       setError('Não foi possível carregar os usuários.');
     } finally {
       setIsLoading(false);
     }
-  }
+  }, [removedUserIds]);
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+  }, [fetchUsers]);
 
   async function handleCreate(event: FormEvent) {
     event.preventDefault();
@@ -86,9 +87,10 @@ export default function AdminUsers({ currentUser }: AdminUsersProps) {
     const confirmed = window.confirm(`Remover "${user.displayName}" do painel?`);
     if (!confirmed) return;
     setError(null);
+    setRemovedUserIds((prev) => new Set(prev).add(user.userId));
+    setUsers((prev) => removeUserFromPanel(prev, user.userId));
     try {
       await deleteUser(user.userId);
-      setUsers((prev) => removeUserFromPanel(prev, user.userId));
     } catch {
       setError('Não foi possível remover o usuário do painel.');
     }

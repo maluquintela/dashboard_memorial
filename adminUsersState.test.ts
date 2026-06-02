@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { removeUserFromPanel } from './src/pages/adminUsersState.ts';
+import { hideRemovedUsers, removeUserFromPanel } from './src/pages/adminUsersState.ts';
 import type { UserProfile } from './src/types/index.ts';
 
 const users: UserProfile[] = [
@@ -30,4 +30,11 @@ test('removes a deleted account from the admin panel list', () => {
 
 test('keeps the current list unchanged when the account is not found', () => {
   assert.deepEqual(removeUserFromPanel(users, 'missing'), users);
+});
+
+test('hides visually removed accounts from refreshed admin results', () => {
+  assert.deepEqual(
+    hideRemovedUsers(users, new Set(['inactive-1'])).map((user) => user.userId),
+    ['owner-1']
+  );
 });
