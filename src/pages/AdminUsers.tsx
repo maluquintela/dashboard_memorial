@@ -4,7 +4,7 @@ import { ShieldCheck, UserPlus, Trash2, RefreshCw } from 'lucide-react';
 import { createUser, deleteUser, listUsers, updateUser } from '../services/api';
 import type { UserProfile, UserRole } from '../types';
 import { TP, tpCardStyle } from '../theme';
-import { hideRemovedUsers, removeUserFromPanel } from './adminUsersState';
+import { removeUserFromPanel } from './adminUsersState';
 
 interface AdminUsersProps {
   currentUser: UserProfile;
@@ -12,7 +12,6 @@ interface AdminUsersProps {
 
 export default function AdminUsers({ currentUser }: AdminUsersProps) {
   const [users, setUsers] = useState<UserProfile[]>([]);
-  const [removedUserIds, setRemovedUserIds] = useState<Set<string>>(() => new Set());
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -25,13 +24,13 @@ export default function AdminUsers({ currentUser }: AdminUsersProps) {
     setIsLoading(true);
     setError(null);
     try {
-      setUsers(hideRemovedUsers(await listUsers(), removedUserIds));
+      setUsers(await listUsers());
     } catch {
       setError('Não foi possível carregar os usuários.');
     } finally {
       setIsLoading(false);
     }
-  }, [removedUserIds]);
+  }, []);
 
   useEffect(() => {
     fetchUsers();
@@ -87,10 +86,9 @@ export default function AdminUsers({ currentUser }: AdminUsersProps) {
     const confirmed = window.confirm(`Remover "${user.displayName}" do painel?`);
     if (!confirmed) return;
     setError(null);
-    setRemovedUserIds((prev) => new Set(prev).add(user.userId));
-    setUsers((prev) => removeUserFromPanel(prev, user.userId));
     try {
       await deleteUser(user.userId);
+      setUsers((prev) => removeUserFromPanel(prev, user.userId));
     } catch {
       setError('Não foi possível remover o usuário do painel.');
     }
