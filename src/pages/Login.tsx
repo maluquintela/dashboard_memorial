@@ -33,7 +33,15 @@ export default function Login() {
         style={{ borderColor: TP.border }}
       >
         <div className="mb-6 flex flex-col items-center text-center">
-          <TecPredLogo variant="dark" size="default" />
+          <div
+            className="flex w-full justify-center rounded-lg px-5 py-4 shadow-sm"
+            style={{
+              background: `linear-gradient(92deg, ${TP.headerFrom} 0%, ${TP.headerTo} 100%)`,
+              boxShadow: '0 10px 24px rgba(59, 63, 175, 0.22)',
+            }}
+          >
+            <TecPredLogo variant="light" size="default" />
+          </div>
           <div
             className="mt-5 flex h-11 w-11 items-center justify-center rounded-lg"
             style={{ background: TP.navActiveBg, color: TP.primary }}
