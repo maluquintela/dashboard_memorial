@@ -40,6 +40,52 @@ const failedMemorial = {
   download_url: '',
 };
 
+const e2eProfile = {
+  user_id: 'user-e2e',
+  email: 'e2e@tecpred.test',
+  display_name: 'Usuária E2E',
+  role: 'user',
+  status: 'active',
+  created_at: '2026-04-29T09:00:00Z',
+  updated_at: '2026-04-29T09:00:00Z',
+};
+
+// Sessão falsa: o app exige login desde a autenticação via Supabase. O Supabase
+// lê a sessão do localStorage (chave sb-<host>-auth-token) e o perfil vem de /api/v1/me.
+async function mockAuthenticatedSession(page: Page) {
+  await page.addInitScript((profile) => {
+    const session = JSON.stringify({
+      access_token: 'e2e-access-token',
+      token_type: 'bearer',
+      expires_in: 3600,
+      expires_at: Math.floor(Date.now() / 1000) + 3600,
+      refresh_token: 'e2e-refresh-token',
+      user: {
+        id: profile.user_id,
+        aud: 'authenticated',
+        role: 'authenticated',
+        email: profile.email,
+        app_metadata: {},
+        user_metadata: {},
+        created_at: profile.created_at,
+      },
+    });
+    const originalGetItem = Storage.prototype.getItem;
+    Storage.prototype.getItem = function getItem(key: string) {
+      if (/^sb-.+-auth-token$/.test(key)) return session;
+      return originalGetItem.call(this, key);
+    };
+  }, e2eProfile);
+
+  await page.route('http://127.0.0.1:8000/api/v1/me', async (route) => {
+    await route.fulfill({ json: e2eProfile });
+  });
+}
+
+test.beforeEach(async ({ page }) => {
+  await mockAuthenticatedSession(page);
+});
+
 async function mockMemorials(page: Page, memorials = [readyMemorial, processingMemorial, failedMemorial]) {
   await page.route(apiPattern, async (route) => {
     const request = route.request();
