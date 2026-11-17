@@ -1,4 +1,11 @@
-import type { Memorial, MemorialReviewItem, ReviewEditableType, ReviewItemCategory } from '../types';
+import type {
+  ApiMemorialType,
+  Memorial,
+  MemorialReviewItem,
+  MemorialType,
+  ReviewEditableType,
+  ReviewItemCategory,
+} from '../types';
 
 type ApiErrorKind = 'network' | 'timeout' | 'validation' | 'download' | 'not_found' | 'server' | 'unknown';
 
@@ -379,3 +386,28 @@ export function normalizeReviewItems(reviewItems: unknown): MemorialReviewItem[]
     }];
   });
 }
+
+export const GENERATION_ROUTE_TYPE_BY_UI_TYPE: Record<MemorialType, string> = {
+  telecomunicacoes: 'telecom',
+  eletrico: 'eletrico',
+  eletrico_canteiro: 'eletrico-canteiro',
+  gas_natural: 'gas-natural',
+  gas_glp: 'glp/v2',
+};
+
+export const LIST_FILTER_TYPE_BY_UI_TYPE: Record<MemorialType, ApiMemorialType> = {
+  telecomunicacoes: 'telecom',
+  eletrico: 'eletrico',
+  eletrico_canteiro: 'eletrico-canteiro',
+  gas_natural: 'gas-natural',
+  gas_glp: 'glp_v2',
+};
+
+export const UI_TYPE_BY_API_TYPE: Record<ApiMemorialType, MemorialType> = {
+  telecom: 'telecomunicacoes',
+  eletrico: 'eletrico',
+  'eletrico-canteiro': 'eletrico_canteiro',
+  'gas-natural': 'gas_natural',
+  glp: 'gas_glp',
+  glp_v2: 'gas_glp',
+};

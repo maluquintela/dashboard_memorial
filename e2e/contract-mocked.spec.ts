@@ -40,6 +40,52 @@ const failedMemorial = {
   download_url: '',
 };
 
+const e2eProfile = {
+  user_id: 'user-e2e',
+  email: 'e2e@tecpred.test',
+  display_name: 'Usuária E2E',
+  role: 'user',
+  status: 'active',
+  created_at: '2026-04-29T09:00:00Z',
+  updated_at: '2026-04-29T09:00:00Z',
+};
+
+// Sessão falsa: o app exige login desde a autenticação via Supabase. O Supabase
+// lê a sessão do localStorage (chave sb-<host>-auth-token) e o perfil vem de /api/v1/me.
+async function mockAuthenticatedSession(page: Page) {
+  await page.addInitScript((profile) => {
+    const session = JSON.stringify({
+      access_token: 'e2e-access-token',
+      token_type: 'bearer',
+      expires_in: 3600,
+      expires_at: Math.floor(Date.now() / 1000) + 3600,
+      refresh_token: 'e2e-refresh-token',
+      user: {
+        id: profile.user_id,
+        aud: 'authenticated',
+        role: 'authenticated',
+        email: profile.email,
+        app_metadata: {},
+        user_metadata: {},
+        created_at: profile.created_at,
+      },
+    });
+    const originalGetItem = Storage.prototype.getItem;
+    Storage.prototype.getItem = function getItem(key: string) {
+      if (/^sb-.+-auth-token$/.test(key)) return session;
+      return originalGetItem.call(this, key);
+    };
+  }, e2eProfile);
+
+  await page.route('http://127.0.0.1:8000/api/v1/me', async (route) => {
+    await route.fulfill({ json: e2eProfile });
+  });
+}
+
+test.beforeEach(async ({ page }) => {
+  await mockAuthenticatedSession(page);
+});
+
 async function mockMemorials(page: Page, memorials = [readyMemorial, processingMemorial, failedMemorial]) {
   await page.route(apiPattern, async (route) => {
     const request = route.request();
@@ -200,4 +246,45 @@ test('network error shows understandable safe message without stack trace or int
   await expect(page.getByText('Não foi possível carregar o histórico')).toBeVisible();
   await expect(page.getByText('Verifique a conexão com a API e tente novamente.')).toBeVisible();
   await expect(page.getByText(/Traceback|stack trace|\/home\/|\/tmp\/|secret|token|password/i)).toHaveCount(0);
+});
+
+test('generates an eletrico canteiro memorial through the persist route', async ({ page }) => {
+  const canteiroMemorial = {
+    ...readyMemorial,
+    id: 'mem-canteiro-1',
+    type: 'eletrico-canteiro',
+    project_name: 'Canteiro Bothanic',
+    pdf_filenames: ['sample.pdf'],
+    download_url: 'http://127.0.0.1:8000/downloads/canteiro-bothanic.docx',
+  };
+  const persistPaths: string[] = [];
+
+  await page.route(apiPattern, async (route) => {
+    const request = route.request();
+    const path = new URL(request.url()).pathname;
+
+    if (request.method() === 'GET' && path === '/api/v1/memoriais') {
+      await route.fulfill({ json: { memorials: [] } });
+      return;
+    }
+
+    if (request.method() === 'POST' && path.endsWith('/from-files/persist')) {
+      persistPaths.push(path);
+      await route.fulfill({ status: 201, json: canteiroMemorial });
+      return;
+    }
+
+    await route.fulfill({ status: 404, json: { detail: 'Memorial não encontrado.' } });
+  });
+
+  await page.goto('/');
+  await page.getByRole('navigation').getByRole('button', { name: 'Elétrico Canteiro' }).click();
+  await expect(page.getByText('Elétrico Canteiro — Anexe as plantas em PDF')).toBeVisible();
+
+  await page.locator('#memorial-files-eletrico_canteiro').setInputFiles(samplePdfPath);
+  await page.getByRole('button', { name: 'Gerar memorial' }).click();
+
+  await expect(page.getByRole('heading', { name: 'Canteiro Bothanic' })).toBeVisible();
+  expect(persistPaths).toEqual(['/api/v1/memoriais/eletrico-canteiro/from-files/persist']);
+  await expect(page.getByRole('heading', { name: 'Memoriais de Elétrico Canteiro' })).toBeVisible();
 });
