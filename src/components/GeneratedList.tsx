@@ -1,4 +1,4 @@
-import { Radio, Zap, Flame, Wind, ChevronRight, Clock, FileDown, Trash2, AlertTriangle, RefreshCw } from 'lucide-react';
+import { Radio, Zap, HardHat, Flame, Wind, ChevronRight, Clock, FileDown, Trash2, AlertTriangle, RefreshCw } from 'lucide-react';
 import type { Memorial, MemorialType } from '../types';
 import { MEMORIAL_TYPE_LABELS } from '../types';
 import { TP, tpCardStyle } from '../theme';
@@ -20,11 +20,18 @@ interface GeneratedListProps {
 const categoryIcons: Record<MemorialType, React.ReactNode> = {
   telecomunicacoes: <Radio size={14} />,
   eletrico: <Zap size={14} />,
+  eletrico_canteiro: <HardHat size={14} />,
   gas_natural: <Flame size={14} />,
   gas_glp: <Wind size={14} />,
 };
 
-const categories: MemorialType[] = ['telecomunicacoes', 'eletrico', 'gas_natural', 'gas_glp'];
+const categories: MemorialType[] = [
+  'telecomunicacoes',
+  'eletrico',
+  'eletrico_canteiro',
+  'gas_natural',
+  'gas_glp',
+];
 
 const statusLabel: Record<Memorial['status'], string> = {
   generating: 'Gerando',

@@ -1,5 +1,16 @@
-export type MemorialType = 'telecomunicacoes' | 'eletrico' | 'gas_natural' | 'gas_glp';
-export type ApiMemorialType = 'telecom' | 'eletrico' | 'gas-natural' | 'glp' | 'glp_v2';
+export type MemorialType =
+  | 'telecomunicacoes'
+  | 'eletrico'
+  | 'eletrico_canteiro'
+  | 'gas_natural'
+  | 'gas_glp';
+export type ApiMemorialType =
+  | 'telecom'
+  | 'eletrico'
+  | 'eletrico-canteiro'
+  | 'gas-natural'
+  | 'glp'
+  | 'glp_v2';
 export type ApiMemorialStatus = 'processing' | 'pending' | 'ready' | 'succeeded' | 'failed' | string;
 
 export interface Memorial {
@@ -148,6 +159,7 @@ export interface ApiValidationError {
 export const MEMORIAL_TYPE_LABELS: Record<MemorialType, string> = {
   telecomunicacoes: 'Telecomunicações',
   eletrico: 'Elétrico',
+  eletrico_canteiro: 'Elétrico Canteiro',
   gas_natural: 'Gas Natural',
   gas_glp: 'Gas GLP',
 };

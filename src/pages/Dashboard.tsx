@@ -20,7 +20,13 @@ import {
 import { normalizeApiError } from '../services/apiContracts';
 import { TP, tpCardStyle } from '../theme';
 
-const MEMORIAL_TYPES: MemorialType[] = ['telecomunicacoes', 'eletrico', 'gas_natural', 'gas_glp'];
+const MEMORIAL_TYPES: MemorialType[] = [
+  'telecomunicacoes',
+  'eletrico',
+  'eletrico_canteiro',
+  'gas_natural',
+  'gas_glp',
+];
 
 function getFriendlyErrorMessage(error: unknown, fallback: string) {
   const normalized = normalizeApiError(error);

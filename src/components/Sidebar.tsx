@@ -1,4 +1,4 @@
-import { Radio, Zap, Flame, Wind, FolderOpen, ShieldCheck } from 'lucide-react';
+import { Radio, Zap, HardHat, Flame, Wind, FolderOpen, ShieldCheck } from 'lucide-react';
 import type { MemorialType } from '../types';
 import TecPredLogo from './TecPredLogo';
 import { TP } from '../theme';
@@ -20,6 +20,7 @@ interface NavItem {
 const items: NavItem[] = [
   { id: 'telecomunicacoes', label: 'Telecomunicações', icon: <Radio size={18} /> },
   { id: 'eletrico', label: 'Elétrico', icon: <Zap size={18} /> },
+  { id: 'eletrico_canteiro', label: 'Elétrico Canteiro', icon: <HardHat size={18} /> },
   { id: 'gas_natural', label: 'Gas Natural', icon: <Flame size={18} /> },
   { id: 'gas_glp', label: 'Gas GLP', icon: <Wind size={18} /> },
 ];

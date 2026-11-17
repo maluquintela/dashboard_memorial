@@ -247,3 +247,44 @@ test('network error shows understandable safe message without stack trace or int
   await expect(page.getByText('Verifique a conexão com a API e tente novamente.')).toBeVisible();
   await expect(page.getByText(/Traceback|stack trace|\/home\/|\/tmp\/|secret|token|password/i)).toHaveCount(0);
 });
+
+test('generates an eletrico canteiro memorial through the persist route', async ({ page }) => {
+  const canteiroMemorial = {
+    ...readyMemorial,
+    id: 'mem-canteiro-1',
+    type: 'eletrico-canteiro',
+    project_name: 'Canteiro Bothanic',
+    pdf_filenames: ['sample.pdf'],
+    download_url: 'http://127.0.0.1:8000/downloads/canteiro-bothanic.docx',
+  };
+  const persistPaths: string[] = [];
+
+  await page.route(apiPattern, async (route) => {
+    const request = route.request();
+    const path = new URL(request.url()).pathname;
+
+    if (request.method() === 'GET' && path === '/api/v1/memoriais') {
+      await route.fulfill({ json: { memorials: [] } });
+      return;
+    }
+
+    if (request.method() === 'POST' && path.endsWith('/from-files/persist')) {
+      persistPaths.push(path);
+      await route.fulfill({ status: 201, json: canteiroMemorial });
+      return;
+    }
+
+    await route.fulfill({ status: 404, json: { detail: 'Memorial não encontrado.' } });
+  });
+
+  await page.goto('/');
+  await page.getByRole('navigation').getByRole('button', { name: 'Elétrico Canteiro' }).click();
+  await expect(page.getByText('Elétrico Canteiro — Anexe as plantas em PDF')).toBeVisible();
+
+  await page.locator('#memorial-files-eletrico_canteiro').setInputFiles(samplePdfPath);
+  await page.getByRole('button', { name: 'Gerar memorial' }).click();
+
+  await expect(page.getByRole('heading', { name: 'Canteiro Bothanic' })).toBeVisible();
+  expect(persistPaths).toEqual(['/api/v1/memoriais/eletrico-canteiro/from-files/persist']);
+  await expect(page.getByRole('heading', { name: 'Memoriais de Elétrico Canteiro' })).toBeVisible();
+});

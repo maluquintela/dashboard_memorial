@@ -3,6 +3,9 @@ import { test } from 'node:test';
 
 import {
   BATCH_MERGE_FALLBACK_WARNING,
+  GENERATION_ROUTE_TYPE_BY_UI_TYPE,
+  LIST_FILTER_TYPE_BY_UI_TYPE,
+  UI_TYPE_BY_API_TYPE,
   canDownloadApiStatus,
   hasBatchMergeFallback,
   normalizeApiError,
@@ -243,4 +246,22 @@ test('normalizes backend review items for editable frontend panels', () => {
   assert.equal(items[0].fieldPath, 'mt.tensao_kv');
   assert.equal(items[0].currentValue, 13.8);
   assert.equal(items[0].editableType, 'number');
+});
+
+test('maps eletrico_canteiro to the eletrico-canteiro API routes', () => {
+  const uiType = 'eletrico_canteiro' as keyof typeof GENERATION_ROUTE_TYPE_BY_UI_TYPE;
+
+  assert.equal(GENERATION_ROUTE_TYPE_BY_UI_TYPE[uiType], 'eletrico-canteiro');
+  assert.equal(LIST_FILTER_TYPE_BY_UI_TYPE[uiType], 'eletrico-canteiro');
+  assert.equal(
+    UI_TYPE_BY_API_TYPE['eletrico-canteiro' as keyof typeof UI_TYPE_BY_API_TYPE],
+    'eletrico_canteiro'
+  );
+});
+
+test('every UI memorial type round-trips through the API type', () => {
+  for (const [uiType, apiType] of Object.entries(LIST_FILTER_TYPE_BY_UI_TYPE)) {
+    assert.equal(UI_TYPE_BY_API_TYPE[apiType], uiType);
+    assert.ok(GENERATION_ROUTE_TYPE_BY_UI_TYPE[uiType as keyof typeof GENERATION_ROUTE_TYPE_BY_UI_TYPE]);
+  }
 });

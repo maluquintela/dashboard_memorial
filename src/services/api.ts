@@ -1,6 +1,5 @@
 import axios from 'axios';
 import type {
-  ApiMemorialType,
   MemorialType,
   GenerateMemorialResponse,
   CorrectMemorialResponse,
@@ -17,6 +16,9 @@ import type {
 } from '../types';
 import {
   BATCH_MERGE_FALLBACK_WARNING,
+  GENERATION_ROUTE_TYPE_BY_UI_TYPE,
+  LIST_FILTER_TYPE_BY_UI_TYPE,
+  UI_TYPE_BY_API_TYPE,
   hasBatchMergeFallback,
   normalizeApiError,
   normalizeReviewItems,
@@ -60,28 +62,6 @@ client.interceptors.response.use(
     throw normalizeApiError(error);
   }
 );
-
-const GENERATION_ROUTE_TYPE_BY_UI_TYPE: Record<MemorialType, string> = {
-  telecomunicacoes: 'telecom',
-  eletrico: 'eletrico',
-  gas_natural: 'gas-natural',
-  gas_glp: 'glp/v2',
-};
-
-const LIST_FILTER_TYPE_BY_UI_TYPE: Record<MemorialType, ApiMemorialType> = {
-  telecomunicacoes: 'telecom',
-  eletrico: 'eletrico',
-  gas_natural: 'gas-natural',
-  gas_glp: 'glp_v2',
-};
-
-const UI_TYPE_BY_API_TYPE: Record<ApiMemorialType, MemorialType> = {
-  telecom: 'telecomunicacoes',
-  eletrico: 'eletrico',
-  'gas-natural': 'gas_natural',
-  glp: 'gas_glp',
-  glp_v2: 'gas_glp',
-};
 
 function toMemorial(api: GeneratedMemorialApiResponse): Memorial {
   const warnings = hasBatchMergeFallback(api.extraction_report)
